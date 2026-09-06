@@ -4,9 +4,9 @@
 
 ## 기술 스택
 
-- Java 17 / Spring Boot 3.x
+- Java 21 / Spring Boot 4.x
 - Spring Web (REST), Spring Data JPA
-- MySQL 8
+- MySQL 9.6
 - Spring Batch / `@Scheduled`
 - Redis (분석 결과 캐싱, 선택)
 - 외부 연동: 기상청 공공데이터포털 API, OpenAI API

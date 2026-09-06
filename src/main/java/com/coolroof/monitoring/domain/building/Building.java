@@ -47,4 +47,13 @@ public class Building {
     private Double lat;
 
     private Double lng;
+
+    @Column(name = "total_floor_area")
+    private Double totalFloorArea;
+
+    @Column(name = "floor_count")
+    private Integer floorCount;
+
+    @Column(name = "roof_type")
+    private String roofType;
 }

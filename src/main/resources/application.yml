@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: monitoring
+  config:
+    import: "optional:classpath:application-secret.yml"
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/coolroof?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
+    username: ${db.username}
+    password: ${db.password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 100
+        order_inserts: true

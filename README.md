@@ -16,7 +16,7 @@
 - MySQL 9.6
 - Spring Batch / `@Scheduled`
 - Redis (분석 결과 캐싱, 선택)
-- 외부 연동: 기상청 공공데이터포털 API, OpenAI API
+- 외부 연동: 기상청 공공데이터포털 API, 국토교통부 건축HUB 건축물대장정보 API, OpenAI API
 - 센서: ESP32(MLX90614)
 
 ## 데이터 흐름
@@ -39,17 +39,30 @@
 
 ### 1. 시크릿 설정
 
-`src/main/resources/application-secret.properties` 파일을 생성하고 아래 키를 채웁니다 (이 파일은 git에 커밋되지 않습니다):
+`src/main/resources/application-secret.yml` 파일을 생성하고 아래 키를 채웁니다 (이 파일은 git에 커밋되지 않습니다):
 
-```properties
-openai.api-key=
-kma.service-key=
+```yaml
+openai:
+  api-key:
+
+kma:
+  service-key:
+
+building-registry:
+  service-key:
+
+db:
+  username:
+  password:
 ```
 
 - `openai.api-key`: OpenAI API 키 (AI 요약 생성용)
 - `kma.service-key`: 공공데이터포털 기상청 API 서비스키
   - [기상청_단기예보 조회서비스(기상청API허브 연계)](https://www.data.go.kr/data/15139470/openapi.do) — 실시간 외기온도
   - [기상청_지상(종관, ASOS) 시간자료 조회서비스](https://www.data.go.kr/data/15059218/openapi.do) — 일사량 등 시간 단위 관측값
+- `building-registry.service-key`: 공공데이터포털 서비스키 (기상청 키와 동일한 계정 키 사용 가능)
+  - [국토교통부_건축HUB_건축물대장정보 서비스](https://www.data.go.kr/data/15134735/openapi.do) — 표제부 조회(연면적·층수·주용도·사용승인일 등, 목업 건물 메타데이터로 사용)
+- `db.username`, `db.password`: 로컬 MySQL 접속 계정
 
 ### 2. 실행
 

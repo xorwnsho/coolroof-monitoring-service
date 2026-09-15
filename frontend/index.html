@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>쿨루프 모니터링</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <nav class="icon-rail">
+      <button class="railbtn active" title="대시보드" aria-label="대시보드">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <button class="railbtn" title="배치 분석" aria-label="배치 분석">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <button class="railbtn" title="경보" aria-label="경보">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 4 2 20h20L12 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1" fill="currentColor"/></svg>
+      </button>
+      <button class="railbtn" title="건물 목록" aria-label="건물 목록">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 21V6l6-3 6 3v15" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 21v-8h6v8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h0M8 13h0M8 17h0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </button>
+      <button class="railbtn" title="센서 연동" aria-label="센서 연동">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
+      </button>
+      <div class="spacer"></div>
+      <button class="railbtn" title="AI 리포트 / 문의하기" aria-label="AI 리포트 문의하기">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v11H8l-4 4V5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="railbtn" title="경보 임계치 설정" aria-label="경보 임계치 설정">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l1.9-1.3-2-3.4-2.2.7a7.7 7.7 0 0 0-2.6-1.5L14 2.5h-4l-.5 2.5a7.7 7.7 0 0 0-2.6 1.5l-2.2-.7-2 3.4L4.6 10.5a7.6 7.6 0 0 0 0 3l-1.9 1.3 2 3.4 2.2-.7c.75.66 1.63 1.17 2.6 1.5l.5 2.5h4l.5-2.5a7.7 7.7 0 0 0 2.6-1.5l2.2.7 2-3.4-1.9-1.3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </button>
+    </nav>
+
+    <main>
+      <div class="topbar">
+        <div class="brandmark">쿨루프 모니터링</div>
+        <div class="searchbar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          건물명, 주소, 건물 ID 검색
+        </div>
+        <div class="topbar-actions">
+          <button class="iconbtn" aria-label="즐겨찾기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 4h12v17l-6-4-6 4V4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+          <button class="iconbtn" aria-label="알림"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <div class="avatar">오준</div>
+        </div>
+      </div>
+
+      <div class="pageheader">
+        <div>
+          <h1>모니터링 대시보드</h1>
+          <div class="breadcrumb">홈 <span>›</span> <span class="current">전체 현황</span></div>
+        </div>
+
+        <div class="kpi-inline">
+          <div class="kpi">
+            <div class="kpi-label">이번 배치 재도장 알림</div>
+            <div class="kpi-value warn num" id="kpiRepaintCount">6건</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">정상 판정 비율</div>
+            <div class="kpi-value good num" id="kpiNormalRate">80%</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">누적 온도 리딩</div>
+            <div class="kpi-value num" id="kpiReadingCount">30,672</div>
+          </div>
+        </div>
+
+        <div class="header-controls">
+          <div class="pill-select">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 9h16M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            오늘
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="pill-live"><span class="dot"></span>실시간 모니터링</div>
+        </div>
+      </div>
+
+      <div class="content-lower">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h2>쿨루프 설치 전·후 비교</h2>
+            <span class="chip-muted">예시 · 월별 평균 표면온도</span>
+          </div>
+          <div class="daychart" style="padding:6px 22px 18px;">
+            <div class="legend-row">
+              <span class="item"><span class="sw" style="background:var(--surface-hot)"></span>시공 전(일반 지붕)</span>
+              <span class="item"><span class="sw" style="background:var(--accent)"></span>시공 후(쿨루프)</span>
+            </div>
+            <div class="chart-wrap" id="effectChart"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div class="card">
+            <div class="card-head">
+              <h2>효과 요약</h2>
+              <span class="chip-muted">실증 데이터 기반</span>
+            </div>
+            <div class="stat2x2" style="margin:8px 22px 20px;">
+              <div class="cell"><div class="lbl">여름철 최대 온도차</div><div class="val good num">-22℃</div></div>
+              <div class="cell"><div class="lbl">평균 표면온도 저감</div><div class="val good num">-9.2℃</div></div>
+              <div class="cell"><div class="lbl">냉방에너지 절감</div><div class="val good num">26.4%</div></div>
+              <div class="cell"><div class="lbl">근거 사례</div><div class="val num" style="font-size:14px;">관악구·서울시 SH</div></div>
+            </div>
+          </div>
+
+          <div class="card" style="flex:1;">
+            <div class="card-head">
+              <h2>AI 분석</h2>
+              <span class="chip good" style="font-size:11px;">쿨루프 권장</span>
+            </div>
+            <div style="padding:10px 22px 20px; font-size:13px; line-height:1.7; color:var(--ink-secondary);">
+              시공 전·후 데이터를 비교하면 여름철(7~8월) 표면온도 차이가 최대 22℃까지 벌어집니다.
+              일반 지붕은 한여름 50℃ 이상까지 달아오르는 반면, 쿨루프 시공 건물은 30℃대 초반에서 안정적으로 유지됩니다.
+              이 반사 효과는 냉방 에너지 사용량을 최대 26%까지 줄여, 시공 비용 대비 회수 기간이 짧습니다.
+              <br><br>
+              <b style="color:var(--ink);">결론: 옥상 표면온도와 냉방비를 같이 낮추고 싶다면 지금 쿨루프를 하세요.</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-gap"></div>
+
+      <div class="crts-card">
+        <h2 class="crts-title">Cool Roof Thermal Simulator</h2>
+
+        <div class="crts-scene-wrap">
+          <svg class="crts-scene" viewBox="0 0 800 330" preserveAspectRatio="xMidYMid slice"
+               role="img" id="crtsScene" aria-label="Dark roof, solar intensity 50, surface temperature 53 degrees Celsius">
+            <defs>
+              <linearGradient id="crtsSkyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#E9EDF5"/>
+                <stop offset="100%" stop-color="#E3E5EE"/>
+              </linearGradient>
+              <radialGradient id="crtsSunGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(249,168,37,0.55)"/>
+                <stop offset="100%" stop-color="rgba(249,168,37,0)"/>
+              </radialGradient>
+              <linearGradient id="crtsRoofWhiteGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#F0F2F5"/>
+                <stop offset="50%" stop-color="#FFFFFF"/>
+                <stop offset="100%" stop-color="#F0F2F5"/>
+              </linearGradient>
+            </defs>
+
+            <!-- 배경 -->
+            <rect x="0" y="0" width="800" height="282" fill="url(#crtsSkyGrad)"/>
+            <rect x="0" y="282" width="800" height="48" fill="#D6D8DC"/>
+            <line x1="0" y1="282" x2="800" y2="282" stroke="#CDD0D5" stroke-width="1"/>
+
+            <!-- 태양 -->
+            <circle cx="197" cy="81" r="62" fill="url(#crtsSunGlow)"/>
+            <circle cx="197" cy="81" r="34" fill="#F9A825"/>
+
+            <!-- 건물 -->
+            <rect x="315" y="230" width="397" height="52" fill="#E8EAEF" fill-opacity="0.6" stroke="#D4D7DE" stroke-width="1"/>
+            <line x1="302" y1="230" x2="726" y2="230" stroke="#D8DDE1" stroke-width="1.5"/>
+
+            <!-- 지붕 아랫면 언더라인 -->
+            <polyline points="302,237 512,170 726,237" fill="none" stroke="#D8DDE1" stroke-width="3" stroke-linejoin="round"/>
+            <!-- 지붕 본체 -->
+            <polyline id="crtsRoofLine" points="302,230 512,163 726,230" fill="none" stroke="#1F2A37" stroke-width="10" stroke-linejoin="miter"/>
+            <polyline id="crtsRoofOutline" points="302,230 512,163 726,230" fill="none" stroke="#DDE1E6" stroke-width="1" opacity="0"/>
+
+            <!-- 입자 -->
+            <g id="crtsParticles"></g>
+
+            <!-- 온도 배지 -->
+            <g id="crtsBadge">
+              <polygon id="crtsBadgeTail" points="505,129 519,129 512,140" fill="#C5221F"/>
+              <rect id="crtsBadgeRect" x="478" y="95" width="68" height="34" rx="10" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
+              <text id="crtsBadgeText" x="512" y="117" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="500" fill="#202124">53°C</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="crts-temp" aria-live="polite">
+          <div class="crts-temp-label">SURFACE TEMP</div>
+          <div class="crts-temp-value" id="crtsTempValue">53°C</div>
+        </div>
+
+        <div class="crts-controls">
+          <label class="crts-label" for="crtsIntensity">Solar Intensity</label>
+          <input type="range" id="crtsIntensity" min="0" max="100" step="1" value="50" aria-label="Solar Intensity" aria-valuetext="50">
+          <div class="crts-number-box" id="crtsIntensityValue">50</div>
+          <label class="crts-label" for="crtsRoofType">Roof Type</label>
+          <div class="crts-select-wrap">
+            <select id="crtsRoofType" aria-label="Roof Type">
+              <option value="Dark" selected>Dark</option>
+              <option value="White">White</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script src="crts-simulator.js"></script>
+</body>
+</html>

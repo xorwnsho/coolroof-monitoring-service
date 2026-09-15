@@ -4,6 +4,10 @@ spring:
   config:
     import: "optional:classpath:application-secret.yml"
 
+  web:
+    resources:
+      static-locations: "file:frontend/,classpath:/static/"
+
   datasource:
     url: jdbc:mysql://localhost:3306/coolroof?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&rewriteBatchedStatements=true
     username: ${db.username}
@@ -23,3 +27,6 @@ spring:
 
 openai:
   model: gpt-4o-mini
+
+cors:
+  allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5500}

@@ -1,5 +1,7 @@
 package com.coolroof.monitoring.batch;
 
+import com.coolroof.monitoring.ai.AiSummaryClient;
+import com.coolroof.monitoring.ai.AiSummaryRequest;
 import com.coolroof.monitoring.domain.analysis.AnalysisResult;
 import com.coolroof.monitoring.domain.analysis.AnalysisResultRepository;
 import com.coolroof.monitoring.domain.analysis.AnalysisStatus;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 임계치(NORMAL/REPAINT_THRESHOLD 등)는 건축팀 근거 수치가 아직 없어 목업 데이터 분포를 보고
  * 잡은 잠정값이다 (backend_claude.md 12번 미확정 항목).
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AnalysisBatchService {
@@ -43,6 +47,7 @@ public class AnalysisBatchService {
     private final BuildingRepository buildingRepository;
     private final TempReadingRepository tempReadingRepository;
     private final AnalysisResultRepository analysisResultRepository;
+    private final AiSummaryClient aiSummaryClient;
 
     @Transactional
     public List<AnalysisResult> runBatch() {
@@ -80,21 +85,44 @@ public class AnalysisBatchService {
             Double trendSlopePerYear = calculateTrendSlopePerYear(fullValidHistoryByBuilding.get(building.getId()));
             AnalysisStatus status = judge(avgGap, peerGap, trendSlopePerYear);
             LocalDate repaintForecast = forecastRepaintDate(avgGap, trendSlopePerYear, status, today);
+            Double roundedPeerGap = peerGap == null ? null : round2(peerGap);
+            Double roundedTrend = trendSlopePerYear == null ? null : round2(trendSlopePerYear);
+
+            String aiSummary = generateAiSummary(
+                    building, status, round2(avgGap), roundedPeerGap, roundedTrend, repaintForecast);
 
             AnalysisResult result = AnalysisResult.builder()
                     .building(building)
                     .period(period)
                     .avgTempGap(round2(avgGap))
-                    .peerGap(peerGap == null ? null : round2(peerGap))
+                    .peerGap(roundedPeerGap)
                     .status(status)
-                    .degradationTrend(trendSlopePerYear == null ? null : round2(trendSlopePerYear))
+                    .degradationTrend(roundedTrend)
                     .repaintForecast(repaintForecast)
-                    .aiSummary(null)
+                    .aiSummary(aiSummary)
                     .createdAt(LocalDateTime.now())
                     .build();
             results.add(analysisResultRepository.save(result));
         }
         return results;
+    }
+
+    private String generateAiSummary(Building building, AnalysisStatus status, double avgGap,
+                                      Double peerGap, Double trendSlopePerYear, LocalDate repaintForecast) {
+        try {
+            return aiSummaryClient.summarize(new AiSummaryRequest(
+                    building.getName(),
+                    building.getUsageType(),
+                    building.getCoolroofDate(),
+                    status,
+                    avgGap,
+                    peerGap,
+                    trendSlopePerYear,
+                    repaintForecast));
+        } catch (Exception e) {
+            log.warn("AI 요약 생성 실패: buildingId={}", building.getId(), e);
+            return null;
+        }
     }
 
     private List<TempReading> filterValid(List<TempReading> readings) {

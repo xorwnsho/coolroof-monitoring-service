@@ -39,3 +39,7 @@ out/
 ### Secrets ###
 src/main/resources/application-secret.yml
 .env
+
+### MD ###
+SIMULATOR.MD
+FIXSI.MD

@@ -16,7 +16,7 @@
     const { months, before, after } = EFFECT_CHART;
 
     const w = el.clientWidth || 420;
-    const h = 240;
+    const h = el.clientHeight || 240;
     const padL = 30, padR = 10, padT = 10, padB = 22;
     const innerW = w - padL - padR;
     const innerH = h - padT - padB;
@@ -29,7 +29,7 @@
     const svg = document.createElementNS(ns, "svg");
     svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     svg.setAttribute("width", "100%");
-    svg.setAttribute("height", h);
+    svg.setAttribute("height", "100%");
 
     const defs = document.createElementNS(ns, "defs");
     function grad(id, color) {
@@ -123,9 +123,26 @@
     el.appendChild(svg);
   }
 
+  function initPageNav() {
+    const navButtons = document.querySelectorAll(".railbtn[data-page]");
+    const pages = document.querySelectorAll(".page-view");
+
+    navButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-page");
+        pages.forEach((page) => {
+          page.hidden = page.id !== targetId;
+        });
+        navButtons.forEach((b) => b.classList.toggle("active", b === btn));
+        if (targetId === "page-dashboard") renderEffectChart();
+      });
+    });
+  }
+
   function init() {
     renderEffectChart();
     window.addEventListener("resize", renderEffectChart);
+    initPageNav();
   }
 
   document.addEventListener("DOMContentLoaded", init);

@@ -7,22 +7,16 @@
 
   const SUN = { x: 197, y: 81 };
   const ROOF_LEFT_START = { x: 302, y: 230 };
-  const ROOF_RIDGE = { x: 512, y: 163 };
-  const ROOF_RIGHT_END = { x: 726, y: 230 };
-  const ROOF_LEFT_LEN = Math.hypot(ROOF_RIDGE.x - ROOF_LEFT_START.x, ROOF_RIDGE.y - ROOF_LEFT_START.y);
-  const ROOF_RIGHT_LEN = Math.hypot(ROOF_RIGHT_END.x - ROOF_RIDGE.x, ROOF_RIGHT_END.y - ROOF_RIDGE.y);
+  const ROOF_LEFT_END = { x: 512, y: 163 };
 
   const ABSORPTIVITY = { Dark: 0.65, White: 0.15 };
   const BADGE_COLOR = { Dark: "#C5221F", White: "#1A73E8" };
   const ROOF_TEMP_COLOR = { cold: [0x1f, 0x2a, 0x37], hot: [0x8e, 0x1b, 0x1b] }; // 20°C / 85°C
 
-  const MAX_PHOTONS = 40;
-  const HEAT_LIFESPAN = 55;
-  const REFLECT_LIFESPAN = 110;
+  const MAX_PHOTONS = 18;
 
   const scene = document.getElementById("crtsScene");
-  const roofLine = document.getElementById("crtsRoofLine");
-  const roofOutline = document.getElementById("crtsRoofOutline");
+  const roofBody = document.getElementById("crtsRoofBody");
   const particlesGroup = document.getElementById("crtsParticles");
   const badgeRect = document.getElementById("crtsBadgeRect");
   const badgeTail = document.getElementById("crtsBadgeTail");
@@ -69,14 +63,15 @@
 
     const badgeColor = BADGE_COLOR[roofType];
     badgeRect.setAttribute("stroke", badgeColor);
-    badgeTail.setAttribute("fill", badgeColor);
+    badgeTail.setAttribute("stroke", badgeColor);
 
     if (roofType === "White") {
-      roofLine.setAttribute("stroke", "url(#crtsRoofWhiteGrad)");
-      roofOutline.setAttribute("opacity", "1");
+      roofBody.setAttribute("fill", "url(#crtsRoofWhiteGrad)");
+      roofBody.setAttribute("stroke", "#DDE1E6");
+      roofBody.setAttribute("stroke-width", "1");
     } else {
-      roofLine.setAttribute("stroke", roofColorForTemp(displayTemp));
-      roofOutline.setAttribute("opacity", "0");
+      roofBody.setAttribute("fill", roofColorForTemp(displayTemp));
+      roofBody.removeAttribute("stroke");
     }
 
     scene.setAttribute(
@@ -95,34 +90,17 @@
     return n;
   }
 
-  function randomRoofPoint() {
-    const totalLen = ROOF_LEFT_LEN + ROOF_RIGHT_LEN;
-    const d = Math.random() * totalLen;
-    if (d <= ROOF_LEFT_LEN) {
-      const tt = d / ROOF_LEFT_LEN;
-      return {
-        x: ROOF_LEFT_START.x + (ROOF_RIDGE.x - ROOF_LEFT_START.x) * tt,
-        y: ROOF_LEFT_START.y + (ROOF_RIDGE.y - ROOF_LEFT_START.y) * tt,
-      };
-    }
-    const tt = (d - ROOF_LEFT_LEN) / ROOF_RIGHT_LEN;
-    return {
-      x: ROOF_RIDGE.x + (ROOF_RIGHT_END.x - ROOF_RIDGE.x) * tt,
-      y: ROOF_RIDGE.y + (ROOF_RIGHT_END.y - ROOF_RIDGE.y) * tt,
-    };
-  }
-
   function spawnPhoton() {
     if (countPhotons() >= MAX_PHOTONS) return;
 
     const angle = Math.random() * Math.PI * 2;
-    const r = Math.sqrt(Math.random()) * 30;
+    const r = Math.sqrt(Math.random()) * 16;
     const sx = SUN.x + Math.cos(angle) * r;
     const sy = SUN.y + Math.sin(angle) * r;
 
-    const target = randomRoofPoint();
-    const tx = target.x;
-    const ty = target.y;
+    const tt = 0.2 + Math.random() * 0.6;
+    const tx = ROOF_LEFT_START.x + (ROOF_LEFT_END.x - ROOF_LEFT_START.x) * tt;
+    const ty = ROOF_LEFT_START.y + (ROOF_LEFT_END.y - ROOF_LEFT_START.y) * tt;
 
     const dx = tx - sx;
     const dy = ty - sy;
@@ -139,116 +117,114 @@
     el.setAttribute("cy", sy.toFixed(1));
     particlesGroup.appendChild(el);
 
-    particles.push({ type: "photon", x: sx, y: sy, tx, ty, vx, vy, el });
+    particles.push({ type: "photon", kind: "incoming", x: sx, y: sy, tx, ty, vx, vy, r: radius, el });
   }
 
-  function spawnHeat(x, y) {
-    const el = document.createElementNS(NS, "circle");
-    el.setAttribute("fill", "rgba(176,58,58,0.16)");
-    el.setAttribute("cx", x.toFixed(1));
-    el.setAttribute("cy", y.toFixed(1));
-    el.setAttribute("r", "18");
-    particlesGroup.appendChild(el);
+  // 광자가 지붕에 도달하면(Dark) 같은 객체/같은 배열 슬롯을 그대로 두고
+  // kind만 'heat'로 바꿔 열기 뭉치로 전환한다 (별도 배열/로직 없음).
+  function convertToHeat(p) {
+    // 열기 뭉치는 지붕에 흡수되는 열이므로 이동하지 않는다. 제자리에서만 커지고 옅어진다.
+    p.vx = 0;
+    p.vy = 0;
+    p.r = 9;
+    p.growth = 0.23;
+    p.kind = "heat";
+    p.life = 60;
+    p.maxLife = 60;
 
-    particles.push({
-      type: "heat",
-      x, y,
-      vx: -0.7 - Math.random() * 1.1,
-      vy: -1.2 - Math.random() * 1.0,
-      radius: 18,
-      age: 0,
-      el,
-    });
+    p.el.setAttribute("fill", "#B03A3A");
   }
 
-  function setReflectGeometry(p) {
-    const hdx = (Math.cos(p.angle) * p.length) / 2;
-    const hdy = (Math.sin(p.angle) * p.length) / 2;
-    p.el.setAttribute("x1", (p.x - hdx).toFixed(1));
-    p.el.setAttribute("y1", (p.y - hdy).toFixed(1));
-    p.el.setAttribute("x2", (p.x + hdx).toFixed(1));
-    p.el.setAttribute("y2", (p.y + hdy).toFixed(1));
+  function renderHeat(p) {
+    p.el.setAttribute("cx", p.x.toFixed(1));
+    p.el.setAttribute("cy", p.y.toFixed(1));
+    p.el.setAttribute("r", p.r.toFixed(1));
+    p.el.setAttribute("opacity", (0.16 * Math.max(0, p.life / p.maxLife)).toFixed(3));
   }
 
-  function spawnReflect(x, y) {
-    const angleDeg = -135 + (Math.random() * 30 - 15);
-    const angle = (angleDeg * Math.PI) / 180;
-    const length = 26 + Math.random() * 10;
-    const speed = 2.4 + Math.random() * 1.2;
-    const color = "#000000";
+  // 광자가 지붕에 도달하면 같은 객체/같은 배열 슬롯을 그대로 두고
+  // kind만 'reflected'로 바꿔 반사광으로 전환한다 (별도 배열/로직 없음).
+  function convertToReflected(p) {
+    const angle = (-135 * Math.PI) / 180 + (Math.random() - 0.5) * ((30 * Math.PI) / 180);
+    const speed = 2.0 + Math.random() * 0.8;
 
-    const el = document.createElementNS(NS, "line");
-    el.setAttribute("stroke", color);
-    el.setAttribute("stroke-width", "1.5");
-    el.setAttribute("stroke-linecap", "butt");
-    el.setAttribute("opacity", "1");
-    particlesGroup.appendChild(el);
+    p.vx = Math.cos(angle) * speed;
+    p.vy = Math.sin(angle) * speed;
+    p.angle = angle;
+    p.len = 13 + Math.random() * 5;
+    p.kind = "reflected";
+    p.life = 70;
+    p.maxLife = 70;
 
-    const p = { type: "reflect", x, y, angle, length, speed, age: 0, el };
-    setReflectGeometry(p);
-    particles.push(p);
+    console.log("[reflect] vx=" + p.vx.toFixed(3) + " vy=" + p.vy.toFixed(3));
+
+    const line = document.createElementNS(NS, "line");
+    line.setAttribute("stroke", "#000000");
+    line.setAttribute("stroke-width", "1.5");
+    line.setAttribute("stroke-linecap", "butt");
+    particlesGroup.replaceChild(line, p.el);
+    p.el = line;
   }
 
-  function spawnCollision(x, y) {
-    if (roofType === "Dark") {
-      spawnHeat(x, y);
-    } else {
-      spawnReflect(x, y);
-    }
+  function renderIncoming(p) {
+    p.el.setAttribute("cx", p.x.toFixed(1));
+    p.el.setAttribute("cy", p.y.toFixed(1));
+  }
+
+  function renderReflected(p) {
+    // x1,y1,x2,y2를 캐시하지 않고 매 렌더마다 p.x/p.y에서 새로 계산한다.
+    const x1 = p.x;
+    const y1 = p.y;
+    const x2 = p.x + Math.cos(p.angle) * p.len;
+    const y2 = p.y + Math.sin(p.angle) * p.len;
+    p.el.setAttribute("x1", x1.toFixed(1));
+    p.el.setAttribute("y1", y1.toFixed(1));
+    p.el.setAttribute("x2", x2.toFixed(1));
+    p.el.setAttribute("y2", y2.toFixed(1));
+    p.el.setAttribute("opacity", Math.max(0, p.life / p.maxLife).toFixed(2));
   }
 
   function updatePhoton(p) {
+    // incoming/reflected/heat 공통: 완전히 동일한 x += vx, y += vy 경로.
     p.x += p.vx;
     p.y += p.vy;
-    const remaining = Math.hypot(p.tx - p.x, p.ty - p.y);
-    const speed = Math.hypot(p.vx, p.vy);
-    if (remaining <= speed) {
-      spawnCollision(p.tx, p.ty);
-      p.el.remove();
-      return false;
+
+    if (p.kind === "incoming") {
+      const remaining = Math.hypot(p.tx - p.x, p.ty - p.y);
+      const speed = Math.hypot(p.vx, p.vy);
+      if (remaining <= speed) {
+        p.x = p.tx;
+        p.y = p.ty;
+        if (roofType === "Dark") {
+          convertToHeat(p);
+          renderHeat(p);
+        } else {
+          convertToReflected(p);
+          renderReflected(p);
+        }
+        return true;
+      }
+      renderIncoming(p);
+      return true;
     }
-    p.el.setAttribute("cx", p.x.toFixed(1));
-    p.el.setAttribute("cy", p.y.toFixed(1));
-    return true;
-  }
 
-  function updateHeat(p) {
-    p.age++;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.radius = Math.min(48, p.radius + 0.18);
-
-    let opacity = 1;
-    const fadeStart = HEAT_LIFESPAN * 0.6;
-    if (p.age > fadeStart) {
-      opacity = Math.max(0, 1 - (p.age - fadeStart) / (HEAT_LIFESPAN - fadeStart));
+    if (p.kind === "heat") {
+      // x, y는 갱신하지 않는다 (제자리 고정).
+      p.r = Math.min(32, p.r + p.growth);
+      p.life -= 1;
+      renderHeat(p);
+      if (p.life <= 0) {
+        p.el.remove();
+        return false;
+      }
+      return true;
     }
-    p.el.setAttribute("cx", p.x.toFixed(1));
-    p.el.setAttribute("cy", p.y.toFixed(1));
-    p.el.setAttribute("r", p.radius.toFixed(1));
-    p.el.setAttribute("opacity", opacity.toFixed(2));
 
-    if (p.age >= HEAT_LIFESPAN) {
-      p.el.remove();
-      return false;
-    }
-    return true;
-  }
-
-  function updateReflect(p) {
-    p.age++;
-    p.x += Math.cos(p.angle) * p.speed;
-    p.y += Math.sin(p.angle) * p.speed;
-
-    let opacity = 1;
-    const fadeStart = REFLECT_LIFESPAN * 0.5;
-    if (p.age > fadeStart) {
-      opacity = Math.max(0, 1 - (p.age - fadeStart) / (REFLECT_LIFESPAN - fadeStart));
-    }
-    setReflectGeometry(p);
-    p.el.setAttribute("opacity", opacity.toFixed(2));
-
-    if (p.age >= REFLECT_LIFESPAN) {
+    // kind === "reflected"
+    p.life -= 1;
+    renderReflected(p);
+    const offscreen = p.x < -50 || p.y < -50;
+    if (p.life <= 0 || offscreen) {
       p.el.remove();
       return false;
     }
@@ -256,20 +232,26 @@
   }
 
   function updateParticle(p) {
-    if (p.type === "photon") return updatePhoton(p);
-    if (p.type === "heat") return updateHeat(p);
-    return updateReflect(p);
+    return updatePhoton(p);
   }
+
+  let tickCount = 0;
 
   function tick() {
     displayTemp += (targetTemp() - displayTemp) * 0.12;
 
-    if (solarIntensity > 0 && Math.random() < (solarIntensity / 100) * 0.35) {
+    if (solarIntensity > 0 && Math.random() < (solarIntensity / 100) * 0.14) {
       spawnPhoton();
     }
 
     particles = particles.filter(updateParticle);
     renderStatic();
+
+    tickCount++;
+    if (tickCount % 60 === 0) {
+      const heatCount = particles.filter((p) => p.kind === "heat").length;
+      console.log("[heat] count=" + heatCount);
+    }
 
     rafId = requestAnimationFrame(tick);
   }
@@ -286,11 +268,13 @@
   }
 
   function handleRoofTypeChange() {
-    roofType = roofTypeSelect.value; // 기존 입자는 각자 수명까지 유지, 신규 생성분만 새 타입 적용
-    if (reducedMotion) {
-      displayTemp = targetTemp();
-      renderStatic();
-    }
+    roofType = roofTypeSelect.value;
+    // 타입 전환 시 이전 타입의 입자를 한 프레임도 남기지 않고 즉시 전부 제거,
+    // 온도·지붕색·배지색도 보간 없이 즉시 스냅한다 (FIXSI.MD 수정 2 — 이전 명세 무효화).
+    particles = [];
+    particlesGroup.innerHTML = "";
+    displayTemp = targetTemp();
+    renderStatic();
   }
 
   intensityInput.addEventListener("input", handleIntensityChange);

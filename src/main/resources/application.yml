@@ -1,3 +1,7 @@
+server:
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:}
+
 spring:
   application:
     name: monitoring

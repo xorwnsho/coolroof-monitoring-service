@@ -15,11 +15,11 @@
       <button class="railbtn active" title="대시보드" aria-label="대시보드" data-page="page-dashboard">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
       </button>
-      <button class="railbtn" title="배치 분석" aria-label="배치 분석" data-page="page-batch">
+      <button class="railbtn" title="군집별 비교" aria-label="군집별 비교" data-page="page-cluster">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2"/></svg>
       </button>
-      <button class="railbtn" title="경보" aria-label="경보">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 4 2 20h20L12 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1" fill="currentColor"/></svg>
+      <button class="railbtn" title="쿨루프 시뮬레이터" aria-label="쿨루프 시뮬레이터" data-page="page-simulator">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.2 4.2l1.55 1.55M18.25 18.25l1.55 1.55M3 12h2.2M18.8 12H21M4.2 19.8l1.55-1.55M18.25 5.75l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <button class="railbtn" title="건물 목록" aria-label="건물 목록">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 21V6l6-3 6 3v15" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 21v-8h6v8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h0M8 13h0M8 17h0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
@@ -124,7 +124,88 @@
       </div>
       </section>
 
-      <section id="page-batch" class="page-view" hidden>
+      <section id="page-cluster" class="page-view" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>군집 조건 설정</h2>
+          <span class="chip-muted">전국 실증 데이터 기반</span>
+        </div>
+        <form class="cluster-form" id="clusterForm">
+          <div class="cluster-field">
+            <label for="clusterStructure">주구조 <span class="req">*</span></label>
+            <select id="clusterStructure" required>
+              <option value="철근콘크리트구조" selected>철근콘크리트구조</option>
+              <option value="철골구조">철골구조</option>
+              <option value="철골철근콘크리트구조">철골철근콘크리트구조</option>
+              <option value="조적구조">조적구조</option>
+              <option value="목구조">목구조</option>
+            </select>
+          </div>
+          <div class="cluster-field">
+            <label for="clusterFloors">건물 층수 <span class="req">*</span></label>
+            <input type="number" id="clusterFloors" min="1" max="80" value="12" required>
+          </div>
+          <div class="cluster-field">
+            <label for="clusterUsage">주용도 <span class="opt">(선택)</span></label>
+            <select id="clusterUsage">
+              <option value="" selected>전체</option>
+              <option value="공동주택">공동주택(아파트)</option>
+              <option value="업무시설">업무시설</option>
+              <option value="근린생활시설">근린생활시설</option>
+              <option value="공장">공장</option>
+              <option value="창고시설">창고시설</option>
+              <option value="교육연구시설">교육연구시설</option>
+            </select>
+          </div>
+          <button type="submit" class="cluster-submit">군집 비교 분석</button>
+        </form>
+      </div>
+
+      <div class="section-gap-sm"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h2>쿨루프 설치 전·후 비교</h2>
+            <span class="chip-muted" id="clusterChipMeta">철근콘크리트구조 · 12층 · 전체 용도</span>
+          </div>
+          <div class="daychart" style="padding:6px 22px 18px;">
+            <div class="legend-row">
+              <span class="item"><span class="sw" style="background:var(--surface-hot)"></span>시공 전(일반 지붕)</span>
+              <span class="item"><span class="sw" style="background:var(--accent)"></span>시공 후(쿨루프)</span>
+            </div>
+            <div class="chart-wrap" id="clusterChart"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:18px;">
+          <div class="card">
+            <div class="card-head">
+              <h2>군집 요약</h2>
+              <span class="chip-muted">표본 <span id="clusterSampleCount">-</span>건</span>
+            </div>
+            <div class="stat2x2" style="margin:8px 22px 20px;">
+              <div class="cell"><div class="lbl">여름철 최대 온도차</div><div class="val good num" id="clusterMaxDiff">-</div></div>
+              <div class="cell"><div class="lbl">평균 표면온도 저감</div><div class="val good num" id="clusterAvgReduction">-</div></div>
+              <div class="cell"><div class="lbl">냉방에너지 절감(추정)</div><div class="val good num" id="clusterEnergySaving">-</div></div>
+              <div class="cell"><div class="lbl">군집 조건</div><div class="val num" style="font-size:13px;" id="clusterConditionLabel">-</div></div>
+            </div>
+          </div>
+
+          <div class="card" style="flex:1;">
+            <div class="card-head">
+              <h2>AI 분석</h2>
+              <span class="chip good" style="font-size:11px;">군집 비교</span>
+            </div>
+            <div style="padding:10px 22px 20px; font-size:13px; line-height:1.7; color:var(--ink-secondary);" id="clusterAiText">
+              군집 조건을 설정하고 "군집 비교 분석"을 눌러주세요.
+            </div>
+          </div>
+        </div>
+      </div>
+      </section>
+
+      <section id="page-simulator" class="page-view" hidden>
       <div class="crts-card">
         <h2 class="crts-title">Cool Roof Thermal Simulator</h2>
 

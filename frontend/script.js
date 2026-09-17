@@ -11,10 +11,8 @@
     tooltip.style.opacity = "0";
   }
 
-  function renderEffectChart() {
-    const el = document.getElementById("effectChart");
-    const { months, before, after } = EFFECT_CHART;
-
+  function renderComparisonChart(el, months, before, after) {
+    if (!el) return;
     const w = el.clientWidth || 420;
     const h = el.clientHeight || 240;
     const padL = 30, padR = 10, padT = 10, padB = 22;
@@ -123,6 +121,112 @@
     el.appendChild(svg);
   }
 
+  function renderEffectChart() {
+    const el = document.getElementById("effectChart");
+    renderComparisonChart(el, EFFECT_CHART.months, EFFECT_CHART.before, EFFECT_CHART.after);
+  }
+
+  // ---------------- 군집별 비교 (건축물대장 주구조/층수/주용도 기반 목데이터) ----------------
+
+  const CLUSTER_STRUCTURE_INFO = {
+    "철근콘크리트구조": { factor: 1.00, sample: 420, reduction: 0.36 },
+    "철골구조": { factor: 1.08, sample: 180, reduction: 0.42 },
+    "철골철근콘크리트구조": { factor: 1.04, sample: 95, reduction: 0.39 },
+    "조적구조": { factor: 0.95, sample: 60, reduction: 0.30 },
+    "목구조": { factor: 0.90, sample: 18, reduction: 0.26 },
+  };
+
+  const CLUSTER_USAGE_INFO = {
+    "": { factor: 1.00, sampleMult: 1.3, label: "전체 용도" },
+    "공동주택": { factor: 0.98, sampleMult: 0.42, label: "공동주택(아파트)" },
+    "업무시설": { factor: 1.00, sampleMult: 0.38, label: "업무시설" },
+    "근린생활시설": { factor: 1.02, sampleMult: 0.5, label: "근린생활시설" },
+    "공장": { factor: 1.06, sampleMult: 0.3, label: "공장" },
+    "창고시설": { factor: 1.08, sampleMult: 0.22, label: "창고시설" },
+    "교육연구시설": { factor: 0.97, sampleMult: 0.28, label: "교육연구시설" },
+  };
+
+  const CLUSTER_BASE_BEFORE = [8, 10, 15, 22, 30, 42, 52, 54, 44, 28, 16, 9];
+
+  function floorBand(floors) {
+    if (floors <= 4) return { key: "저층", factor: 1.03, sampleMult: 1.15 };
+    if (floors <= 15) return { key: "중층", factor: 1.00, sampleMult: 1.0 };
+    return { key: "고층", factor: 0.94, sampleMult: 0.55 };
+  }
+
+  function computeCluster(structureKey, floors, usageKey) {
+    const struct = CLUSTER_STRUCTURE_INFO[structureKey];
+    const usage = CLUSTER_USAGE_INFO[usageKey] || CLUSTER_USAGE_INFO[""];
+    const band = floorBand(floors);
+
+    const combinedFactor = struct.factor * band.factor * usage.factor;
+    const before = CLUSTER_BASE_BEFORE.map((v) => Math.round(Math.min(59, v * combinedFactor) * 10) / 10);
+    const after = before.map((v) => Math.round(v * (1 - struct.reduction) * 10) / 10);
+
+    const diffs = before.map((v, i) => v - after[i]);
+    const maxDiff = Math.max(...diffs);
+    const avgReduction = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+    const energySavingPct = Math.min(42, Math.round(maxDiff * 1.2 * 10) / 10);
+    const sampleCount = Math.max(8, Math.round(struct.sample * band.sampleMult * usage.sampleMult));
+
+    return {
+      months: EFFECT_CHART.months,
+      before, after,
+      maxDiff, avgReduction, energySavingPct, sampleCount,
+      bandLabel: band.key, usageLabel: usage.label,
+    };
+  }
+
+  function renderClusterResult(structureKey, floors, usageKey) {
+    const result = computeCluster(structureKey, floors, usageKey);
+
+    renderComparisonChart(document.getElementById("clusterChart"), result.months, result.before, result.after);
+
+    const usageText = usageKey ? result.usageLabel : "전체 용도";
+    document.getElementById("clusterSampleCount").textContent = result.sampleCount.toLocaleString();
+    document.getElementById("clusterMaxDiff").textContent = `-${result.maxDiff.toFixed(1)}℃`;
+    document.getElementById("clusterAvgReduction").textContent = `-${result.avgReduction.toFixed(1)}℃`;
+    document.getElementById("clusterEnergySaving").textContent = `${result.energySavingPct.toFixed(1)}%`;
+    document.getElementById("clusterConditionLabel").textContent =
+      `${structureKey} · ${floors}층(${result.bandLabel}) · ${usageText}`;
+    document.getElementById("clusterChipMeta").textContent = `${structureKey} · ${floors}층 · ${usageText}`;
+
+    document.getElementById("clusterAiText").innerHTML =
+      `선택하신 <b style="color:var(--ink);">${structureKey}</b> / ` +
+      `<b style="color:var(--ink);">${floors}층(${result.bandLabel})</b>` +
+      (usageKey ? ` / <b style="color:var(--ink);">${result.usageLabel}</b>` : "") +
+      ` 조건과 유사한 전국 실증 건물 <b style="color:var(--ink);">${result.sampleCount.toLocaleString()}건</b>을 비교한 결과입니다.` +
+      `<br><br>` +
+      `이 군집은 여름철(7~8월) 표면온도 차이가 최대 <b style="color:var(--ink);">${result.maxDiff.toFixed(1)}℃</b>까지 벌어지며, ` +
+      `연중 평균 <b style="color:var(--ink);">${result.avgReduction.toFixed(1)}℃</b>의 저감 효과를 보입니다. ` +
+      `이는 냉방 에너지 사용량을 약 <b style="color:var(--ink);">${result.energySavingPct.toFixed(1)}%</b> 절감하는 수준입니다.` +
+      `<br><br>` +
+      `<b style="color:var(--ink);">결론: 이 조건의 건물이라면 쿨루프 시공 효과가 뚜렷하게 나타날 것으로 예상됩니다.</b>`;
+  }
+
+  let clusterRefresh = null;
+
+  function initClusterPage() {
+    const form = document.getElementById("clusterForm");
+    if (!form) return;
+    const structureSel = document.getElementById("clusterStructure");
+    const floorsInput = document.getElementById("clusterFloors");
+    const usageSel = document.getElementById("clusterUsage");
+
+    function submitCurrent() {
+      const floors = Math.max(1, Math.min(80, Number(floorsInput.value) || 1));
+      renderClusterResult(structureSel.value, floors, usageSel.value);
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitCurrent();
+    });
+
+    clusterRefresh = submitCurrent;
+    submitCurrent();
+  }
+
   function initPageNav() {
     const navButtons = document.querySelectorAll(".railbtn[data-page]");
     const pages = document.querySelectorAll(".page-view");
@@ -135,6 +239,7 @@
         });
         navButtons.forEach((b) => b.classList.toggle("active", b === btn));
         if (targetId === "page-dashboard") renderEffectChart();
+        if (targetId === "page-cluster" && clusterRefresh) clusterRefresh();
       });
     });
   }
@@ -143,6 +248,7 @@
     renderEffectChart();
     window.addEventListener("resize", renderEffectChart);
     initPageNav();
+    initClusterPage();
   }
 
   document.addEventListener("DOMContentLoaded", init);

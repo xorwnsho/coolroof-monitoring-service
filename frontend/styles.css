@@ -433,6 +433,56 @@ table.mon .busage { font-size: 11px; color: var(--ink-muted); }
 
 .grid-bottom { display: grid; grid-template-columns: 1fr 1.4fr; gap: 18px; }
 
+/* ---------------- 군집별 비교 폼 ---------------- */
+.cluster-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 4px 22px 22px;
+}
+.cluster-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+.cluster-field label {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.cluster-field .req { color: var(--critical); }
+.cluster-field .opt { color: var(--ink-muted); font-weight: 250; }
+.cluster-field select,
+.cluster-field input[type="number"] {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--ink);
+  font-family: inherit;
+}
+.cluster-field select:focus,
+.cluster-field input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.cluster-submit {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 250;
+  cursor: pointer;
+  flex: none;
+}
+.cluster-submit:hover { opacity: 0.9; }
+
+.section-gap-sm { height: 18px; }
+
 /* ---------------- footer ---------------- */
 .app-footer {
   margin-top: 28px;

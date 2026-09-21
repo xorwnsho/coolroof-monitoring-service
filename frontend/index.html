@@ -48,31 +48,7 @@
       <div class="pageheader">
         <div>
           <h1>Monitoring Dashboard</h1>
-          <div class="breadcrumb">홈 <span>›</span> <span class="current">전체 현황</span></div>
-        </div>
-
-        <div class="kpi-inline">
-          <div class="kpi">
-            <div class="kpi-label">이번 배치 재도장 알림</div>
-            <div class="kpi-value warn num" id="kpiRepaintCount">6건</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-label">정상 판정 비율</div>
-            <div class="kpi-value good num" id="kpiNormalRate">80%</div>
-          </div>
-          <div class="kpi">
-            <div class="kpi-label">누적 온도 리딩</div>
-            <div class="kpi-value num" id="kpiReadingCount">30,672</div>
-          </div>
-        </div>
-
-        <div class="header-controls">
-          <div class="pill-select">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 9h16M8 3v3M16 3v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            오늘
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <div class="pill-live"><span class="dot"></span>실시간 모니터링</div>
+          <div class="breadcrumb"><span class="current" id="breadcrumbCurrent">전체현황</span></div>
         </div>
       </div>
 
@@ -127,47 +103,29 @@
       <section id="page-cluster" class="page-view" hidden>
       <div class="card">
         <div class="card-head">
-          <h2>군집 조건 설정</h2>
+          <h2>군집 조건 입력</h2>
           <span class="chip-muted">전국 실증 데이터 기반</span>
         </div>
         <form class="cluster-form" id="clusterForm">
-          <div class="cluster-field">
-            <label for="clusterStructure">주구조 <span class="req">*</span></label>
-            <select id="clusterStructure" required>
-              <option value="철근콘크리트구조" selected>철근콘크리트구조</option>
-              <option value="철골구조">철골구조</option>
-              <option value="철골철근콘크리트구조">철골철근콘크리트구조</option>
-              <option value="조적구조">조적구조</option>
-              <option value="목구조">목구조</option>
-            </select>
+          <div class="cluster-field" style="flex:1; min-width:280px;">
+            <label for="clusterQuery">건물 조건을 문장으로 입력하세요</label>
+            <input type="text" id="clusterQuery"
+                   placeholder="예: 대전에 철근콘크리트구조의 8층짜리 빌딩 하나 있는데 쿨루프 설치하면 어떻게 돼?"
+                   required>
           </div>
-          <div class="cluster-field">
-            <label for="clusterFloors">건물 층수 <span class="req">*</span></label>
-            <input type="number" id="clusterFloors" min="1" max="80" value="12" required>
-          </div>
-          <div class="cluster-field">
-            <label for="clusterUsage">주용도 <span class="opt">(선택)</span></label>
-            <select id="clusterUsage">
-              <option value="" selected>전체</option>
-              <option value="공동주택">공동주택(아파트)</option>
-              <option value="업무시설">업무시설</option>
-              <option value="근린생활시설">근린생활시설</option>
-              <option value="공장">공장</option>
-              <option value="창고시설">창고시설</option>
-              <option value="교육연구시설">교육연구시설</option>
-            </select>
-          </div>
-          <button type="submit" class="cluster-submit">군집 비교 분석</button>
+          <button type="submit" class="cluster-submit" id="clusterSubmitBtn">분석하기</button>
         </form>
+        <div class="cluster-error" id="clusterError" hidden></div>
       </div>
 
+      <div id="clusterResultWrap" hidden>
       <div class="section-gap-sm"></div>
 
       <div class="grid-2">
         <div class="card">
           <div class="card-head">
             <h2>쿨루프 설치 전·후 비교</h2>
-            <span class="chip-muted" id="clusterChipMeta">철근콘크리트구조 · 12층 · 전체 용도</span>
+            <span class="chip-muted" id="clusterChipMeta">문장을 입력해 분석해보세요</span>
           </div>
           <div class="daychart" style="padding:6px 22px 18px;">
             <div class="legend-row">
@@ -197,11 +155,12 @@
               <h2>AI 분석</h2>
               <span class="chip good" style="font-size:11px;">군집 비교</span>
             </div>
-            <div style="padding:10px 22px 20px; font-size:13px; line-height:1.7; color:var(--ink-secondary);" id="clusterAiText">
-              군집 조건을 설정하고 "군집 비교 분석"을 눌러주세요.
+            <div style="padding:10px 22px 20px; font-size:13px; line-height:1.7; color:var(--ink-secondary); white-space:pre-line;" id="clusterAiText">
+              위에 문장을 입력하고 "분석하기"를 눌러주세요. 예: "대전에 철근콘크리트구조의 8층짜리 빌딩 하나 있는데 쿨루프 설치하면 어떻게 돼?"
             </div>
           </div>
         </div>
+      </div>
       </div>
       </section>
 
@@ -211,7 +170,7 @@
 
         <div class="crts-scene-wrap">
           <svg class="crts-scene" viewBox="0 0 800 330" preserveAspectRatio="xMidYMid slice"
-               role="img" id="crtsScene" aria-label="Dark roof, solar intensity 50, surface temperature 53 degrees Celsius">
+               role="img" id="crtsScene" aria-label="Dark roof 53 degrees Celsius, cool roof 28 degrees Celsius, solar intensity 50">
             <defs>
               <radialGradient id="crtsSunGlow" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stop-color="rgba(249,168,37,0.55)"/>
@@ -228,47 +187,70 @@
             <rect x="0" y="282" width="800" height="48" fill="#D6D8DC"/>
             <line x1="0" y1="282" x2="800" y2="282" stroke="#CDD0D5" stroke-width="1"/>
 
-            <!-- 태양 -->
-            <circle cx="197" cy="81" r="62" fill="url(#crtsSunGlow)"/>
-            <circle cx="197" cy="81" r="34" fill="#F9A825"/>
+            <!-- 태양(두 집 사이 중앙) -->
+            <circle cx="400" cy="72" r="62" fill="url(#crtsSunGlow)"/>
+            <circle cx="400" cy="72" r="34" fill="#F9A825"/>
 
-            <!-- 건물 -->
-            <rect x="315" y="230" width="397" height="52" fill="#E8EAEF" fill-opacity="0.6" stroke="#D4D7DE" stroke-width="1"/>
-            <line x1="302" y1="230" x2="726" y2="230" stroke="#D8DDE1" stroke-width="1.5"/>
+            <!-- 왼쪽 집: 일반 지붕 -->
+            <rect x="62" y="235" width="276" height="47" fill="#E8EAEF" fill-opacity="0.6" stroke="#D4D7DE" stroke-width="1"/>
+            <line x1="50" y1="235" x2="350" y2="235" stroke="#D8DDE1" stroke-width="1.5"/>
+            <path id="crtsRoofUndersideDark" d="M36.51,238.88 L200,174.5 L363.49,238.88 L362.80,240.76 L200,185.5 L37.20,240.76 Z" fill="#D8DDE1"/>
+            <path id="crtsRoofBodyDark" d="M49.66,234.06 L200,174.5 L350.34,234.06 L349.66,235.94 L200,185.5 L50.34,235.94 Z" fill="#1F2A37"/>
+            <text x="200" y="262" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="13" font-weight="500" fill="#5F6368">노후화 지붕</text>
 
-            <!-- 지붕 아랫면(밝은 회색, 처마 밖으로 14px 더 빠져나옴) -->
-            <path id="crtsRoofUnderside" d="M288.36,233.30 L512,157.5 L739.66,233.23 L739.06,235.14 L512,168.5 L288.97,235.21 Z" fill="#D8DDE1"/>
-            <!-- 지붕 본체(용마루 11 → 처마 2 테이퍼 쐐기형 폴리곤) -->
-            <path id="crtsRoofBody" d="M301.70,229.05 L512,157.5 L726.30,229.05 L725.70,230.95 L512,168.5 L302.30,230.95 Z" fill="#1F2A37"/>
+            <!-- 오른쪽 집: 쿨루프 -->
+            <rect x="462" y="235" width="276" height="47" fill="#E8EAEF" fill-opacity="0.6" stroke="#D4D7DE" stroke-width="1"/>
+            <line x1="450" y1="235" x2="750" y2="235" stroke="#D8DDE1" stroke-width="1.5"/>
+            <path id="crtsRoofUndersideWhite" d="M436.51,238.88 L600,174.5 L763.49,238.88 L762.80,240.76 L600,185.5 L437.20,240.76 Z" fill="#D8DDE1"/>
+            <path id="crtsRoofBodyWhite" d="M449.66,234.06 L600,174.5 L750.34,234.06 L749.66,235.94 L600,185.5 L450.34,235.94 Z" fill="url(#crtsRoofWhiteGrad)" stroke="#DDE1E6" stroke-width="1"/>
+            <text x="600" y="262" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="13" font-weight="500" fill="#5F6368">쿨루프</text>
 
-            <!-- 입자 -->
+            <!-- 입자(두 집 공용, 같은 배열 + house 필드로 구분) -->
             <g id="crtsParticles"></g>
 
-            <!-- 온도 배지 -->
-            <g id="crtsBadge">
-              <polygon id="crtsBadgeTail" points="506,129 518,129 512,138" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
-              <rect id="crtsBadgeRect" x="478" y="95" width="68" height="34" rx="10" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
-              <text id="crtsBadgeText" x="512" y="117" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="500" fill="#202124">53°C</text>
+            <!-- 온도 배지: 왼쪽(빨강) -->
+            <g id="crtsBadgeDark">
+              <polygon points="194,146 206,146 200,155" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
+              <rect x="166" y="112" width="68" height="34" rx="10" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
+              <text id="crtsBadgeTextDark" x="200" y="134" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="500" fill="#202124">53°C</text>
+            </g>
+
+            <!-- 온도 배지: 오른쪽(파랑) -->
+            <g id="crtsBadgeWhite">
+              <polygon points="594,146 606,146 600,155" fill="#FFFFFF" stroke="#1A73E8" stroke-width="2"/>
+              <rect x="566" y="112" width="68" height="34" rx="10" fill="#FFFFFF" stroke="#1A73E8" stroke-width="2"/>
+              <text id="crtsBadgeTextWhite" x="600" y="134" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="500" fill="#202124">28°C</text>
             </g>
           </svg>
         </div>
 
-        <div class="crts-temp" aria-live="polite">
-          <div class="crts-temp-label">SURFACE TEMP</div>
-          <div class="crts-temp-value" id="crtsTempValue">53°C</div>
+        <div class="crts-temp3" aria-live="polite">
+          <div class="crts-temp3-col">
+            <div class="crts-temp3-label">일반 지붕</div>
+            <div class="crts-temp3-value" id="crtsDarkValue">53°C</div>
+          </div>
+          <div class="crts-temp3-col crts-temp3-core">
+            <div class="crts-temp3-label">쿨루프 적용 시</div>
+            <div class="crts-temp3-value crts-temp3-diff" id="crtsDiffValue">−20°C</div>
+          </div>
+          <div class="crts-temp3-col">
+            <div class="crts-temp3-label">쿨루프</div>
+            <div class="crts-temp3-value" id="crtsWhiteValue">33°C</div>
+          </div>
+        </div>
+
+        <div class="crts-source-note">지붕 온도는 실측 연구(환경부 쿨루프 가이드, 2024) 범위에 맞춘 추정값입니다</div>
+
+        <div class="crts-presets" id="crtsPresets">
+          <button type="button" class="crts-preset-btn" data-intensity="90">맑은 여름 한낮</button>
+          <button type="button" class="crts-preset-btn" data-intensity="35">구름 많음</button>
+          <button type="button" class="crts-preset-btn" data-intensity="8">비</button>
         </div>
 
         <div class="crts-controls">
-          <label class="crts-label" for="crtsIntensity">Solar Intensity</label>
-          <input type="range" id="crtsIntensity" min="0" max="100" step="1" value="50" aria-label="Solar Intensity" aria-valuetext="50">
-          <div class="crts-number-box" id="crtsIntensityValue">50</div>
-          <label class="crts-label" for="crtsRoofType">Roof Type</label>
-          <div class="crts-select-wrap">
-            <select id="crtsRoofType" aria-label="Roof Type">
-              <option value="Dark" selected>Dark</option>
-              <option value="White">White</option>
-            </select>
-          </div>
+          <label class="crts-label" for="crtsIntensity">햇빛 세기</label>
+          <input type="range" id="crtsIntensity" min="0" max="100" step="1" value="50" aria-label="햇빛 세기" aria-valuetext="500 W/m²">
+          <div class="crts-number-box" id="crtsIntensityValue">500 W/m²</div>
         </div>
       </div>
       </section>

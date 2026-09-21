@@ -41,6 +41,10 @@ public class BuildingRegistryClient {
                 + "&pageNo=" + pageNo;
 
         String xml = restClient.get().uri(URI.create(uri)).retrieve().body(String.class);
+        if (xml == null || xml.isBlank()) {
+            log.warn("건축물대장 응답이 비어 있음 (법정동: {})", legalDong);
+            return List.of();
+        }
         return parseItems(xml);
     }
 

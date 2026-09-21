@@ -24,7 +24,10 @@ public class QueryExtractionClient {
     private static final String ENDPOINT = "https://api.openai.com/v1/chat/completions";
 
     private static final String SYSTEM_PROMPT = """
-            너는 건물 정보가 담긴 한국어 문장에서 아래 조건을 JSON으로 추출하는 어시스턴트다.
+            너는 건물 정보가 담긴 한국어 입력에서 아래 조건을 JSON으로 추출하는 어시스턴트다.
+            입력은 완전한 문장("대전에 철근콘크리트구조의 8층짜리 빌딩...")일 수도 있고,
+            "대전 / 철근콘크리트구조 / 8층"처럼 슬래시나 쉼표로 구분된 키워드 나열일 수도 있다.
+            형식과 무관하게 의미상 같은 조건이면 동일하게 추출하라.
             반드시 아래 형식의 JSON 객체 하나만 출력하라. 다른 설명 텍스트를 절대 붙이지 마라.
 
             {"region": string|null, "structure": string|null, "floors": number|null, "usage": string|null}

@@ -101,6 +101,10 @@ public class ClusterAnalysisService {
             List<RegistryBuilding> buildings;
             try {
                 buildings = buildingRegistryClient.fetchBuildings(dong, ROWS_PER_DONG, 1);
+            } catch (org.springframework.web.client.HttpStatusCodeException e) {
+                // 건축HUB API 쪽 일시적 오류(타임아웃 등) — 이 법정동만 건너뛰고 계속 진행.
+                log.warn("건축물대장 조회 실패 (건축HUB {}): {}", e.getStatusCode(), dong);
+                continue;
             } catch (Exception e) {
                 log.warn("건축물대장 조회 실패: {}", dong, e);
                 continue;

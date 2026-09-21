@@ -72,7 +72,8 @@ public class BuildingRegistryClient {
                         totalFloorArea,
                         floorCount,
                         useApprovalDate,
-                        text(item, "roofCdNm")));
+                        text(item, "roofCdNm"),
+                        text(item, "strctCdNm")));
             }
         } catch (Exception e) {
             log.warn("건축물대장 응답 파싱 실패", e);

@@ -13,6 +13,7 @@ public record RegistryBuilding(
         double totalFloorArea,
         int floorCount,
         LocalDate useApprovalDate,
-        String roofType
+        String roofType,
+        String structureType
 ) {
 }

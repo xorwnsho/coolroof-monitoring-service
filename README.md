@@ -51,6 +51,9 @@ kma:
 building-registry:
   service-key:
 
+legal-dong:
+  service-key:
+
 db:
   username:
   password:
@@ -62,6 +65,8 @@ db:
   - [기상청_지상(종관, ASOS) 시간자료 조회서비스](https://www.data.go.kr/data/15059218/openapi.do) — 일사량 등 시간 단위 관측값
 - `building-registry.service-key`: 공공데이터포털 서비스키 (기상청 키와 동일한 계정 키 사용 가능)
   - [국토교통부_건축HUB_건축물대장정보 서비스](https://www.data.go.kr/data/15134735/openapi.do) — 표제부 조회(연면적·층수·주용도·사용승인일 등, 목업 건물 메타데이터로 사용)
+- `legal-dong.service-key`: 공공데이터포털 서비스키 (위 두 키와 동일한 계정 키 사용 가능, "활용신청"만 별도로 필요)
+  - [행정안전부_행정표준코드_법정동코드](https://www.data.go.kr/data/15077871/openapi.do) — 지역명(예: "대전")으로 그 지역에 속한 모든 법정동(시군구코드+법정동코드)을 실시간 조회. 특정 지역을 코드에 나열(하드코딩)하지 않고 전국 어디든 조회하기 위한 용도
 - `db.username`, `db.password`: 로컬 MySQL 접속 계정
 
 ### 2. 실행

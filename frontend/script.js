@@ -170,10 +170,15 @@
     const submitBtn = document.getElementById("clusterSubmitBtn");
     let lastResult = null;
 
+    const loadingEl = document.getElementById("clusterLoading");
+
     async function runAnalysis(query) {
       hideClusterError();
       submitBtn.disabled = true;
       submitBtn.textContent = "분석 중...";
+      if (loadingEl) loadingEl.hidden = false;
+      const resultWrap = document.getElementById("clusterResultWrap");
+      if (resultWrap) resultWrap.hidden = true;
       try {
         const res = await fetch(`${CLUSTER_API_BASE}/api/cluster/analyze`, {
           method: "POST",
@@ -192,6 +197,7 @@
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = "분석하기";
+        if (loadingEl) loadingEl.hidden = true;
       }
     }
 

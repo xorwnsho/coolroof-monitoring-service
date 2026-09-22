@@ -48,6 +48,39 @@ public class BuildingRegistryClient {
         return parseItems(xml);
     }
 
+    /**
+     * 법정동 + 지번(본번/부번)으로 특정 건물 하나(또는 그 지번의 여러 동)를 정확히 조회한다.
+     * 카카오 주소 검색 결과처럼 지번을 이미 알고 있을 때 쓴다 — 법정동 전체를 훑지 않는다.
+     */
+    public List<RegistryBuilding> fetchByAddress(String sigunguCd, String bjdongCd,
+                                                  String mainAddressNo, String subAddressNo) {
+        String uri = ENDPOINT
+                + "?serviceKey=" + serviceKey
+                + "&sigunguCd=" + sigunguCd
+                + "&bjdongCd=" + bjdongCd
+                + "&platGbCd=0"
+                + "&bun=" + padTo4(mainAddressNo)
+                + "&ji=" + padTo4(subAddressNo)
+                + "&numOfRows=20"
+                + "&pageNo=1";
+
+        String xml = restClient.get().uri(URI.create(uri)).retrieve().body(String.class);
+        if (xml == null || xml.isBlank()) {
+            log.warn("건축물대장 응답이 비어 있음 (지번: {} {} {}-{})", sigunguCd, bjdongCd, mainAddressNo, subAddressNo);
+            return List.of();
+        }
+        return parseItems(xml);
+    }
+
+    /** 건축HUB의 bun/ji 파라미터는 4자리 zero-padded 숫자 문자열을 요구한다. */
+    private String padTo4(String value) {
+        String digits = value == null ? "" : value.replaceAll("[^0-9]", "");
+        if (digits.isBlank()) {
+            digits = "0";
+        }
+        return String.format("%04d", Integer.parseInt(digits));
+    }
+
     private List<RegistryBuilding> parseItems(String xml) {
         List<RegistryBuilding> result = new ArrayList<>();
         try {
@@ -72,12 +105,14 @@ public class BuildingRegistryClient {
                         text(item, "platPlc"),
                         text(item, "newPlatPlc"),
                         text(item, "bldNm"),
+                        text(item, "dongNm"),
                         mainPurpsCdNm,
                         totalFloorArea,
                         floorCount,
                         useApprovalDate,
                         text(item, "roofCdNm"),
-                        text(item, "strctCdNm")));
+                        text(item, "strctCdNm"),
+                        parseDouble(text(item, "archArea"))));
             }
         } catch (Exception e) {
             log.warn("건축물대장 응답 파싱 실패", e);

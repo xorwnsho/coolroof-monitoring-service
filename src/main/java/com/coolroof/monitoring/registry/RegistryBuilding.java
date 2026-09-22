@@ -9,11 +9,13 @@ public record RegistryBuilding(
         String platPlc,
         String newPlatPlc,
         String bldNm,
+        String dongNm,
         String mainPurpsCdNm,
         double totalFloorArea,
         int floorCount,
         LocalDate useApprovalDate,
         String roofType,
-        String structureType
+        String structureType,
+        Double roofFootprintArea
 ) {
 }

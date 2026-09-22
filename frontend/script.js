@@ -151,72 +151,197 @@
     document.getElementById("clusterAiText").textContent = result.aiText;
   }
 
-  function showClusterError(message) {
-    const errorEl = document.getElementById("clusterError");
+  function showClusterError(message, elementId = "clusterError") {
+    const errorEl = document.getElementById(elementId);
     if (!errorEl) return;
     errorEl.textContent = message;
     errorEl.hidden = false;
   }
 
-  function hideClusterError() {
-    const errorEl = document.getElementById("clusterError");
+  function hideClusterError(elementId = "clusterError") {
+    const errorEl = document.getElementById(elementId);
     if (errorEl) errorEl.hidden = true;
   }
 
   let clusterRefresh = null;
 
-  function initClusterPage() {
-    const form = document.getElementById("clusterForm");
-    if (!form) return;
-    const queryInput = document.getElementById("clusterQuery");
-    const submitBtn = document.getElementById("clusterSubmitBtn");
-    let lastResult = null;
+  // ---------------- 01. 내 건물 선택 (건물명/주소 검색 → 건축물대장 실측 정보) ----------------
 
+  function extractYear(dateValue) {
+    if (!dateValue) return "-";
+    if (Array.isArray(dateValue)) return `${dateValue[0]}년`;
+    const year = String(dateValue).split("-")[0];
+    return year ? `${year}년` : "-";
+  }
+
+  function parseYear(dateValue) {
+    if (!dateValue) return null;
+    if (Array.isArray(dateValue)) return dateValue[0];
+    const year = parseInt(String(dateValue).split("-")[0], 10);
+    return Number.isNaN(year) ? null : year;
+  }
+
+  function regionFromAddress(building, addressName) {
+    const address = building.newPlatPlc || building.platPlc || addressName || "";
+    return address.trim().split(/\s+/).slice(0, 2).join(" ");
+  }
+
+  // 아파트 단지처럼 한 지번에 동이 여러 개 등록된 경우(101동/102동/유치원 등) 구분해서 보여준다.
+  // "주건축물" 같은 원 표준동 표기는 단일 건물엔 의미가 없어서 붙이지 않는다.
+  function displayBuildingName(b) {
+    const name = b.bldNm || "(이름 없음)";
+    if (b.dongNm && !b.dongNm.includes("주건축물")) {
+      return `${name} ${b.dongNm}`;
+    }
+    return name;
+  }
+
+  function initBuildingSearch() {
+    const input = document.getElementById("buildingSearchInput");
+    const searchBtn = document.getElementById("buildingSearchBtn");
+    if (!input || !searchBtn) return;
+
+    const resultsEl = document.getElementById("buildingSearchResults");
+    const selectedWrap = document.getElementById("buildingSelectedWrap");
     const loadingEl = document.getElementById("clusterLoading");
+    const similarCard = document.getElementById("similarConditionsCard");
 
-    async function runAnalysis(query) {
-      hideClusterError();
-      submitBtn.disabled = true;
-      submitBtn.textContent = "분석 중...";
-      if (loadingEl) loadingEl.hidden = false;
+    let selectedBuilding = null;
+    let selectedRegion = null;
+
+    function selectBuilding(item) {
+      resultsEl.hidden = true;
+      resultsEl.innerHTML = "";
+
+      const b = item.building;
+      selectedBuilding = b;
+      selectedRegion = regionFromAddress(b, item.addressName);
+
+      document.getElementById("buildingSelectedName").textContent = displayBuildingName(b) || item.addressName;
+      document.getElementById("buildingUsage").textContent = b.mainPurpsCdNm || "-";
+      document.getElementById("buildingYear").textContent = extractYear(b.useApprovalDate);
+      document.getElementById("buildingFloors").textContent = b.floorCount != null ? `${b.floorCount}층` : "-";
+      document.getElementById("buildingRoofArea").textContent =
+          b.roofFootprintArea != null ? `${Math.round(b.roofFootprintArea)} m²` : "정보 없음";
+      document.getElementById("buildingRoofType").textContent = b.roofType || "-";
+      document.getElementById("buildingStructure").textContent = b.structureType || "-";
+      selectedWrap.hidden = false;
+      if (similarCard) similarCard.hidden = false;
+
       const resultWrap = document.getElementById("clusterResultWrap");
       if (resultWrap) resultWrap.hidden = true;
+    }
+
+    function renderResults(items) {
+      resultsEl.innerHTML = "";
+      if (items.length === 1) {
+        selectBuilding(items[0]);
+        return;
+      }
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "building-search-result-item";
+        btn.innerHTML = `<span class="name">${displayBuildingName(item.building)}</span>` +
+            `<span class="addr">${item.building.newPlatPlc || item.building.platPlc || item.addressName}</span>`;
+        btn.addEventListener("click", () => selectBuilding(item));
+        resultsEl.appendChild(btn);
+      });
+      resultsEl.hidden = false;
+      selectedWrap.hidden = true;
+    }
+
+    async function runSearch(query) {
+      hideClusterError();
+      resultsEl.hidden = true;
+      selectedWrap.hidden = true;
+      if (loadingEl) loadingEl.hidden = false;
       try {
-        const res = await fetch(`${CLUSTER_API_BASE}/api/cluster/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
-        });
+        const res = await fetch(`${CLUSTER_API_BASE}/api/buildings/search?query=${encodeURIComponent(query)}`);
         const data = await res.json();
         if (!res.ok) {
-          showClusterError(data.error || "분석에 실패했습니다. 다시 시도해 주세요.");
+          showClusterError(data.error || "검색에 실패했습니다. 다시 시도해 주세요.");
           return;
         }
-        lastResult = data;
-        renderClusterResult(data);
+        renderResults(data);
       } catch (err) {
         showClusterError("서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.");
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "분석하기";
         if (loadingEl) loadingEl.hidden = true;
       }
     }
 
-    form.addEventListener("submit", (e) => {
+    searchBtn.addEventListener("click", () => {
+      const query = input.value.trim();
+      if (query) runSearch(query);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
       e.preventDefault();
-      const query = queryInput.value.trim();
-      if (!query) return;
-      runAnalysis(query);
+      const query = input.value.trim();
+      if (query) runSearch(query);
     });
 
-    // 페이지를 다시 열었을 때, 숨겨져 있던 동안 0크기로 그려졌던 차트를 재요청 없이
-    // 이미 받아둔 결과로만 다시 그린다 (서버 재호출 없음).
-    clusterRefresh = () => {
-      if (lastResult) {
-        renderComparisonChart(document.getElementById("clusterChart"), lastResult.months, lastResult.before, lastResult.after);
-      }
-    };
+    // ---------------- 02. 유사 조건 ----------------
+
+    const toggleButtons = document.querySelectorAll(".condition-toggle");
+    toggleButtons.forEach((btn) => {
+      btn.addEventListener("click", () => btn.classList.toggle("active"));
+    });
+
+    const findSimilarBtn = document.getElementById("findSimilarBtn");
+    const similarLoadingEl = document.getElementById("similarLoading");
+    if (findSimilarBtn) {
+      findSimilarBtn.addEventListener("click", async () => {
+        if (!selectedBuilding) return;
+        hideClusterError("similarError");
+        findSimilarBtn.disabled = true;
+        findSimilarBtn.textContent = "찾는 중...";
+        if (similarLoadingEl) similarLoadingEl.hidden = false;
+        const resultWrap = document.getElementById("clusterResultWrap");
+        if (resultWrap) resultWrap.hidden = true;
+
+        const cond = {};
+        toggleButtons.forEach((btn) => {
+          cond[btn.getAttribute("data-cond")] = btn.classList.contains("active");
+        });
+
+        const payload = {
+          region: selectedRegion,
+          structureType: selectedBuilding.structureType,
+          usage: selectedBuilding.mainPurpsCdNm,
+          sameUsage: !!cond.sameUsage,
+          builtYear: parseYear(selectedBuilding.useApprovalDate),
+          yearTolerance: !!cond.yearTolerance,
+          floors: selectedBuilding.floorCount,
+          floorTolerance: !!cond.floorTolerance,
+          roofArea: selectedBuilding.roofFootprintArea,
+          roofAreaTolerance: !!cond.roofAreaTolerance,
+          roofType: selectedBuilding.roofType,
+          sameRoofType: !!cond.sameRoofType,
+        };
+
+        try {
+          const res = await fetch(`${CLUSTER_API_BASE}/api/buildings/similar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            showClusterError(data.error || "유사 건물 찾기에 실패했습니다. 다시 시도해 주세요.", "similarError");
+            return;
+          }
+          renderClusterResult(data);
+        } catch (err) {
+          showClusterError("서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.", "similarError");
+        } finally {
+          findSimilarBtn.disabled = false;
+          findSimilarBtn.textContent = "유사 건물 찾기";
+          if (similarLoadingEl) similarLoadingEl.hidden = true;
+        }
+      });
+    }
   }
 
   const PAGE_BREADCRUMB_LABEL = {
@@ -250,7 +375,7 @@
     renderEffectChart();
     window.addEventListener("resize", renderEffectChart);
     initPageNav();
-    initClusterPage();
+    initBuildingSearch();
   }
 
   document.addEventListener("DOMContentLoaded", init);

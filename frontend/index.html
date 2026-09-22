@@ -103,24 +103,66 @@
       <section id="page-cluster" class="page-view" hidden>
       <div class="card">
         <div class="card-head">
-          <h2>군집 조건 입력</h2>
+          <h2>01. 내 건물 선택</h2>
           <span class="chip-muted">전국 실증 데이터 기반</span>
         </div>
-        <form class="cluster-form" id="clusterForm">
-          <div class="cluster-field" style="flex:1; min-width:280px;">
-            <label for="clusterQuery">건물 조건 입력란</label>
-            <input type="text" id="clusterQuery"
-                   placeholder="예: 대전 / 철근콘크리트구조 / 8층"
-                   required>
+        <div style="padding: 4px 22px 22px;">
+          <div class="cluster-field">
+            <label for="buildingSearchInput">건물 조건 입력란</label>
+            <div class="building-search-box">
+              <input type="text" id="buildingSearchInput"
+                     placeholder="주소를 입력하세요(예: 대전 청사로 254)">
+              <button type="button" id="buildingSearchBtn" aria-label="검색">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
           </div>
-          <button type="submit" class="cluster-submit" id="clusterSubmitBtn">분석하기</button>
-        </form>
+
+          <div class="building-search-results" id="buildingSearchResults" hidden></div>
+
+          <div class="building-selected" id="buildingSelectedWrap" hidden>
+            <div class="building-selected-label">선택된 건물</div>
+            <div class="building-selected-name" id="buildingSelectedName">-</div>
+            <div class="building-detail-grid">
+              <div class="building-detail-item"><span class="lbl">용도</span><span class="val" id="buildingUsage">-</span></div>
+              <div class="building-detail-item"><span class="lbl">준공연도</span><span class="val" id="buildingYear">-</span></div>
+              <div class="building-detail-item"><span class="lbl">총수</span><span class="val" id="buildingFloors">-</span></div>
+              <div class="building-detail-item"><span class="lbl">옥상면적</span><span class="val" id="buildingRoofArea">-</span></div>
+              <div class="building-detail-item"><span class="lbl">옥상형태</span><span class="val" id="buildingRoofType">-</span></div>
+              <div class="building-detail-item"><span class="lbl">구조</span><span class="val" id="buildingStructure">-</span></div>
+            </div>
+          </div>
+        </div>
         <div class="cluster-loading" id="clusterLoading" hidden>
           <div class="cluster-spinner"></div>
-          <div class="cluster-loading-text">분석 중...</div>
-          <div class="cluster-loading-sub">지역에 따라 최대 1분 소요</div>
+          <div class="cluster-loading-text">검색 중...</div>
+          <div class="cluster-loading-sub">건물 정보를 조회하고 있어요</div>
         </div>
         <div class="cluster-error" id="clusterError" hidden></div>
+      </div>
+
+      <div id="similarConditionsCard" class="card" hidden style="margin-top:18px;">
+        <div class="card-head">
+          <h2>02. 유사 조건</h2>
+        </div>
+        <div style="padding: 4px 22px 22px;">
+          <div class="condition-toggles">
+            <button type="button" class="condition-toggle active" data-cond="sameUsage">동일 용도</button>
+            <button type="button" class="condition-toggle" data-cond="yearTolerance">준공연도 ±5년</button>
+            <button type="button" class="condition-toggle" data-cond="floorTolerance">총수 ±2층</button>
+            <button type="button" class="condition-toggle" data-cond="roofAreaTolerance">옥상면적 ±25%</button>
+            <button type="button" class="condition-toggle active" data-cond="sameRoofType">같은 지붕형태</button>
+          </div>
+          <div style="margin-top:20px; text-align:center;">
+            <button type="button" class="cluster-submit" id="findSimilarBtn">유사 건물 찾기</button>
+          </div>
+        </div>
+        <div class="cluster-loading" id="similarLoading" hidden>
+          <div class="cluster-spinner"></div>
+          <div class="cluster-loading-text">검색 중...</div>
+          <div class="cluster-loading-sub">건물 정보를 조회하고 있어요</div>
+        </div>
+        <div class="cluster-error" id="similarError" hidden></div>
       </div>
 
       <div id="clusterResultWrap" hidden>
@@ -242,6 +284,11 @@
             <div class="crts-temp3-label">쿨루프</div>
             <div class="crts-temp3-value" id="crtsWhiteValue">33°C</div>
           </div>
+        </div>
+
+        <div class="crts-savings">
+          <div class="crts-savings-row">예상 냉방에너지 절감 <span class="crts-savings-value">약 16~22%</span></div>
+          <div class="crts-savings-row">예상 연간 냉방비 절감 <span class="crts-savings-value">약 280~360만원</span></div>
         </div>
 
         <div class="crts-source-note">지붕 온도는 실측 연구(환경부 쿨루프 가이드, 2024) 범위에 맞춘 추정값입니다</div>

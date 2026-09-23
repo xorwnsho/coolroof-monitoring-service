@@ -131,7 +131,7 @@
   // 프론트(Vercel)와 백엔드(daisy) 배포 도메인이 다르면 이 값을 실제 백엔드 주소로 바꾼다.
   // 로컬에서 Spring Boot가 정적 파일을 같이 서빙할 때는 빈 문자열(같은 origin)로 둔다.
   const CLUSTER_API_BASE = location.hostname.endsWith("vercel.app")
-      ? "https://wisoft.dev/juntaek/api"
+      ? "https://daisy.wisoft.dev/juntaek/api"
       : "";
 
   function renderClusterResult(result) {

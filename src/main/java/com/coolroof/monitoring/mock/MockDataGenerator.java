@@ -3,6 +3,7 @@ package com.coolroof.monitoring.mock;
 import com.coolroof.monitoring.domain.analysis.AnalysisResultRepository;
 import com.coolroof.monitoring.domain.building.Building;
 import com.coolroof.monitoring.domain.building.BuildingRepository;
+import com.coolroof.monitoring.domain.building.BuildingSource;
 import com.coolroof.monitoring.domain.reading.TempReading;
 import com.coolroof.monitoring.domain.reading.TempReadingRepository;
 import com.coolroof.monitoring.registry.BuildingRegistryClient;
@@ -41,9 +42,16 @@ public class MockDataGenerator {
     public MockGenerateResult generate(int buildingCount) {
         Random random = new Random();
 
-        analysisResultRepository.deleteAllInBatch();
-        tempReadingRepository.deleteAllInBatch();
-        buildingRepository.deleteAllInBatch();
+        // 실제 센서(ESP32)가 쌓은 건물/데이터는 목데이터 재생성 대상에서 제외한다 —
+        // source가 SENSOR인 건물은 절대 지우지 않는다.
+        List<Building> mockBuildings = buildingRepository.findAll().stream()
+                .filter(b -> b.getSource() != BuildingSource.SENSOR)
+                .toList();
+        List<Long> mockBuildingIds = mockBuildings.stream().map(Building::getId).toList();
+
+        analysisResultRepository.deleteByBuildingIdIn(mockBuildingIds);
+        tempReadingRepository.deleteByBuildingIdIn(mockBuildingIds);
+        buildingRepository.deleteAllInBatch(mockBuildings);
 
         List<CandidateBuilding> pool = collectCandidates(buildingCount, random);
         if (pool.size() < buildingCount) {
@@ -98,6 +106,7 @@ public class MockDataGenerator {
                     .totalFloorArea(registryBuilding.totalFloorArea())
                     .floorCount(registryBuilding.floorCount())
                     .roofType(registryBuilding.roofType())
+                    .source(BuildingSource.MOCK)
                     .build();
             building = buildingRepository.save(building);
 

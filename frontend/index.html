@@ -24,7 +24,7 @@
       <button class="railbtn" title="건물 목록" aria-label="건물 목록">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 21V6l6-3 6 3v15" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 21v-8h6v8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h0M8 13h0M8 17h0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
       </button>
-      <button class="railbtn" title="센서 연동" aria-label="센서 연동">
+      <button class="railbtn" title="센서 연동" aria-label="센서 연동" data-page="page-sensor">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
       </button>
       <div class="spacer"></div>
@@ -304,6 +304,20 @@
           <input type="range" id="crtsIntensity" min="0" max="100" step="1" value="50" aria-label="햇빛 세기" aria-valuetext="500 W/m²">
           <div class="crts-number-box" id="crtsIntensityValue">500 W/m²</div>
         </div>
+      </div>
+      </section>
+
+      <section id="page-sensor" class="page-view" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>센서 연동</h2>
+          <span class="chip-muted">실시간 수신</span>
+        </div>
+        <div class="sensor-live">
+          <div class="sensor-live-value" id="sensorLiveValue">--</div>
+          <div class="sensor-live-unit">°C</div>
+        </div>
+        <div class="sensor-live-meta" id="sensorLiveMeta">수신 대기 중...</div>
       </div>
       </section>
 

@@ -348,7 +348,39 @@
     "page-dashboard": "전체현황",
     "page-cluster": "유사 건물 조건 설정 및 분석",
     "page-simulator": "쿨루프 시뮬레이션",
+    "page-sensor": "센서 연동",
   };
+
+  // ---------------- 센서 연동 (실시간 숫자만 표시) ----------------
+
+  function initSensorPage() {
+    const valueEl = document.getElementById("sensorLiveValue");
+    const metaEl = document.getElementById("sensorLiveMeta");
+    if (!valueEl || !metaEl) return;
+
+    async function refresh() {
+      try {
+        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/latest`);
+        const data = await res.json();
+        if (data.temperature == null) {
+          valueEl.textContent = "--";
+          metaEl.textContent = "아직 수신된 데이터가 없습니다";
+          return;
+        }
+        valueEl.textContent = data.temperature.toFixed(1);
+        const measuredAt = new Date(data.measuredAt);
+        const timeText = Number.isNaN(measuredAt.getTime())
+            ? data.measuredAt
+            : measuredAt.toLocaleTimeString("ko-KR");
+        metaEl.textContent = `마지막 수신: ${timeText}`;
+      } catch (err) {
+        metaEl.textContent = "서버에 연결하지 못했습니다.";
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 5000);
+  }
 
   function initPageNav() {
     const navButtons = document.querySelectorAll(".railbtn[data-page]");
@@ -376,6 +408,7 @@
     window.addEventListener("resize", renderEffectChart);
     initPageNav();
     initBuildingSearch();
+    initSensorPage();
   }
 
   document.addEventListener("DOMContentLoaded", init);

@@ -2,6 +2,8 @@ package com.coolroof.monitoring.domain.building;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -56,4 +58,8 @@ public class Building {
 
     @Column(name = "roof_type")
     private String roofType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source")
+    private BuildingSource source;
 }

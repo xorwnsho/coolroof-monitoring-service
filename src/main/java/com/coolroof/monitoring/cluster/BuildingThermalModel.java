@@ -38,6 +38,7 @@ public class BuildingThermalModel {
 
     public static final Map<String, UsageInfo> USAGE_INFO = Map.of(
             "공동주택", new UsageInfo(0.98, "공동주택(아파트)"),
+            "단독주택", new UsageInfo(0.95, "단독주택"),
             "업무시설", new UsageInfo(1.00, "업무시설"),
             "근린생활시설", new UsageInfo(1.02, "근린생활시설"),
             "공장", new UsageInfo(1.06, "공장"),

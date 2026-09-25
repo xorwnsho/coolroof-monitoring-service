@@ -21,9 +21,6 @@
       <button class="railbtn" title="쿨루프 시뮬레이터" aria-label="쿨루프 시뮬레이터" data-page="page-simulator">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.2 4.2l1.55 1.55M18.25 18.25l1.55 1.55M3 12h2.2M18.8 12H21M4.2 19.8l1.55-1.55M18.25 5.75l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <button class="railbtn" title="건물 목록" aria-label="건물 목록">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 21V6l6-3 6 3v15" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 21v-8h6v8" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h0M8 13h0M8 17h0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-      </button>
       <button class="railbtn" title="센서 연동" aria-label="센서 연동" data-page="page-sensor">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
       </button>
@@ -39,10 +36,6 @@
     <main>
       <div class="topbar">
         <div class="brandmark">Cool Roof Monitoring</div>
-        <div class="searchbar">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          건물명, 주소, 건물 ID 검색
-        </div>
       </div>
 
       <div class="pageheader">
@@ -243,14 +236,14 @@
             <line x1="50" y1="235" x2="350" y2="235" stroke="#D8DDE1" stroke-width="1.5"/>
             <path id="crtsRoofUndersideDark" d="M36.51,238.88 L200,174.5 L363.49,238.88 L362.80,240.76 L200,185.5 L37.20,240.76 Z" fill="#D8DDE1"/>
             <path id="crtsRoofBodyDark" d="M49.66,234.06 L200,174.5 L350.34,234.06 L349.66,235.94 L200,185.5 L50.34,235.94 Z" fill="#1F2A37"/>
-            <text x="200" y="262" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="13" font-weight="500" fill="#5F6368">노후화 지붕</text>
+            <text x="200" y="262" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="13" font-weight="700" fill="#5F6368">노후화 지붕</text>
 
             <!-- 오른쪽 집: 쿨루프 -->
             <rect x="462" y="235" width="276" height="47" fill="#E8EAEF" fill-opacity="0.6" stroke="#D4D7DE" stroke-width="1"/>
             <line x1="450" y1="235" x2="750" y2="235" stroke="#D8DDE1" stroke-width="1.5"/>
             <path id="crtsRoofUndersideWhite" d="M436.51,238.88 L600,174.5 L763.49,238.88 L762.80,240.76 L600,185.5 L437.20,240.76 Z" fill="#D8DDE1"/>
             <path id="crtsRoofBodyWhite" d="M449.66,234.06 L600,174.5 L750.34,234.06 L749.66,235.94 L600,185.5 L450.34,235.94 Z" fill="url(#crtsRoofWhiteGrad)" stroke="#DDE1E6" stroke-width="1"/>
-            <text x="600" y="262" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="13" font-weight="500" fill="#5F6368">쿨루프</text>
+            <text x="600" y="262" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="13" font-weight="700" fill="#5F6368">쿨루프</text>
 
             <!-- 입자(두 집 공용, 같은 배열 + house 필드로 구분) -->
             <g id="crtsParticles"></g>
@@ -259,14 +252,14 @@
             <g id="crtsBadgeDark">
               <polygon points="194,146 206,146 200,155" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
               <rect x="166" y="112" width="68" height="34" rx="10" fill="#FFFFFF" stroke="#C5221F" stroke-width="2"/>
-              <text id="crtsBadgeTextDark" x="200" y="134" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="500" fill="#202124">53°C</text>
+              <text id="crtsBadgeTextDark" x="200" y="134" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="700" fill="#202124">53°C</text>
             </g>
 
             <!-- 온도 배지: 오른쪽(파랑) -->
             <g id="crtsBadgeWhite">
               <polygon points="594,146 606,146 600,155" fill="#FFFFFF" stroke="#1A73E8" stroke-width="2"/>
               <rect x="566" y="112" width="68" height="34" rx="10" fill="#FFFFFF" stroke="#1A73E8" stroke-width="2"/>
-              <text id="crtsBadgeTextWhite" x="600" y="134" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="500" fill="#202124">28°C</text>
+              <text id="crtsBadgeTextWhite" x="600" y="134" text-anchor="middle" font-family="'Roboto','Noto Sans KR',sans-serif" font-size="14" font-weight="700" fill="#202124">28°C</text>
             </g>
           </svg>
         </div>
@@ -308,16 +301,55 @@
       </section>
 
       <section id="page-sensor" class="page-view" hidden>
-      <div class="card">
-        <div class="card-head">
-          <h2>센서 연동</h2>
-          <span class="chip-muted">실시간 수신</span>
+
+      <div class="grid-2-equal">
+        <div class="card">
+          <div class="card-head">
+            <h2>표면온도 추이</h2>
+            <span class="chip-muted">내 센서 실측</span>
+          </div>
+          <div class="dropdown-select" id="sensorHistoryToggles" style="margin: 12px 22px 0; margin-left: auto; display: block; width: fit-content;">
+            <button type="button" class="dropdown-select-btn">
+              <span class="dropdown-select-label">1시간</span>
+              <svg class="dropdown-caret" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-select-menu" hidden>
+              <button type="button" class="dropdown-select-option active" data-window="HOUR">1시간</button>
+              <button type="button" class="dropdown-select-option" data-window="DAY">1일</button>
+              <button type="button" class="dropdown-select-option" data-window="WEEK">1주일</button>
+              <button type="button" class="dropdown-select-option" data-window="MONTH">한달</button>
+            </div>
+          </div>
+          <div class="daychart" style="padding:6px 22px 18px;">
+            <div class="chart-wrap" id="sensorHistoryChart"></div>
+          </div>
         </div>
-        <div class="sensor-live">
-          <div class="sensor-live-value" id="sensorLiveValue">--</div>
-          <div class="sensor-live-unit">°C</div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>건물 군집별 평균 비교</h2>
+            <span class="chip-muted">단독주택·철근콘크리트구조 가정</span>
+          </div>
+          <div class="dropdown-select" id="sensorClusterToggles" style="margin: 12px 22px 0; margin-left: auto; display: block; width: fit-content;">
+            <button type="button" class="dropdown-select-btn">
+              <span class="dropdown-select-label">1시간</span>
+              <svg class="dropdown-caret" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-select-menu" hidden>
+              <button type="button" class="dropdown-select-option active" data-window="HOUR">1시간</button>
+              <button type="button" class="dropdown-select-option" data-window="DAY">1일</button>
+              <button type="button" class="dropdown-select-option" data-window="WEEK">1주일</button>
+              <button type="button" class="dropdown-select-option" data-window="MONTH">한달</button>
+            </div>
+          </div>
+          <div class="daychart" style="padding:6px 22px 18px;">
+            <div class="legend-row">
+              <span class="item"><span class="sw" style="background:var(--accent)"></span>내 센서</span>
+              <span class="item"><span class="sw" style="background:var(--surface-hot)"></span>군집 평균(추정)</span>
+            </div>
+            <div class="chart-wrap" id="sensorClusterChart"></div>
+          </div>
         </div>
-        <div class="sensor-live-meta" id="sensorLiveMeta">수신 대기 중...</div>
       </div>
       </section>
 

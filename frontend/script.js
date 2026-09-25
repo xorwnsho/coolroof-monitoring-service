@@ -126,6 +126,103 @@
     renderComparisonChart(el, EFFECT_CHART.months, EFFECT_CHART.before, EFFECT_CHART.after);
   }
 
+  // ---------------- 범용 시계열 라인차트 (null 허용, 시리즈 여러 개) ----------------
+  // series: [{ label, color, values }], values[i]가 null이면 그 지점은 건너뛰고 선이 끊긴다.
+  function renderLineChart(el, labels, series) {
+    if (!el) return;
+    const w = el.clientWidth || 420;
+    const h = el.clientHeight || 240;
+    const padL = 34, padR = 10, padT = 10, padB = 22;
+    const innerW = w - padL - padR;
+    const innerH = h - padT - padB;
+
+    const allValues = series.flatMap((s) => s.values).filter((v) => v != null);
+    let minY = 0, maxY = 40;
+    if (allValues.length) {
+      minY = Math.floor(Math.min(...allValues) - 2);
+      maxY = Math.ceil(Math.max(...allValues) + 2);
+      if (minY === maxY) { minY -= 1; maxY += 1; }
+    }
+
+    const xAt = (i) => labels.length > 1 ? padL + (innerW * i) / (labels.length - 1) : padL + innerW / 2;
+    const yAt = (v) => padT + innerH - (innerH * (v - minY)) / (maxY - minY);
+
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+
+    const gridValues = [minY, minY + (maxY - minY) / 2, maxY];
+    gridValues.forEach((v) => {
+      const y = yAt(v);
+      const l = document.createElementNS(ns, "line");
+      l.setAttribute("x1", padL); l.setAttribute("x2", w - padR);
+      l.setAttribute("y1", y); l.setAttribute("y2", y);
+      l.setAttribute("class", "grid-line");
+      svg.appendChild(l);
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", 2); t.setAttribute("y", y + 3);
+      t.setAttribute("class", "axis-label");
+      t.textContent = Math.round(v);
+      svg.appendChild(t);
+    });
+
+    const labelStep = Math.max(1, Math.ceil(labels.length / 6));
+    labels.forEach((lab, i) => {
+      if (i % labelStep !== 0 && i !== labels.length - 1) return;
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", xAt(i));
+      t.setAttribute("y", h - 6);
+      t.setAttribute("text-anchor", i === labels.length - 1 ? "end" : i === 0 ? "start" : "middle");
+      t.setAttribute("class", "axis-label");
+      t.textContent = lab;
+      svg.appendChild(t);
+    });
+
+    series.forEach((s) => {
+      let d = "";
+      let drawing = false;
+      s.values.forEach((v, i) => {
+        if (v == null) { drawing = false; return; }
+        d += (drawing ? " L " : "M ") + xAt(i) + "," + yAt(v);
+        drawing = true;
+      });
+      if (!d) return;
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", d);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", s.color);
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(path);
+    });
+
+    const overlay = document.createElementNS(ns, "rect");
+    overlay.setAttribute("x", padL); overlay.setAttribute("y", padT);
+    overlay.setAttribute("width", Math.max(innerW, 0)); overlay.setAttribute("height", Math.max(innerH, 0));
+    overlay.setAttribute("fill", "transparent");
+    svg.appendChild(overlay);
+
+    overlay.addEventListener("mousemove", (e) => {
+      const rect = svg.getBoundingClientRect();
+      const scaleX = w / rect.width;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const i = Math.round(((mx - padL) / innerW) * (labels.length - 1));
+      const idx = Math.max(0, Math.min(labels.length - 1, i));
+      const lines = series
+          .map((s) => s.values[idx] != null ? `${s.label} ${s.values[idx].toFixed(1)}℃` : null)
+          .filter(Boolean)
+          .join(" · ");
+      if (lines) showTip(e.clientX, e.clientY, `<b>${labels[idx]}</b><br>${lines}`);
+    });
+    overlay.addEventListener("mouseleave", hideTip);
+
+    el.innerHTML = "";
+    el.appendChild(svg);
+  }
+
   // ---------------- 군집별 비교 (자연어 질의 → 백엔드 실측 분석) ----------------
 
   // 프론트(Vercel)와 백엔드(daisy) 배포 도메인이 다르면 이 값을 실제 백엔드 주소로 바꾼다.
@@ -353,33 +450,93 @@
 
   // ---------------- 센서 연동 (실시간 숫자만 표시) ----------------
 
-  function initSensorPage() {
-    const valueEl = document.getElementById("sensorLiveValue");
-    const metaEl = document.getElementById("sensorLiveMeta");
-    if (!valueEl || !metaEl) return;
+  // 드롭다운 버튼(세모 아이콘) 클릭 -> 메뉴 펼침, 옵션 클릭 -> 선택 반영하고 닫힘.
+  function wireDropdownToggle(wrap, onSelect) {
+    const btn = wrap.querySelector(".dropdown-select-btn");
+    const label = wrap.querySelector(".dropdown-select-label");
+    const menu = wrap.querySelector(".dropdown-select-menu");
+    const options = wrap.querySelectorAll(".dropdown-select-option");
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const willOpen = menu.hidden;
+      menu.hidden = !willOpen;
+      wrap.classList.toggle("open", willOpen);
+    });
+    options.forEach((opt) => {
+      opt.addEventListener("click", () => {
+        options.forEach((o) => o.classList.toggle("active", o === opt));
+        label.textContent = opt.textContent;
+        menu.hidden = true;
+        wrap.classList.remove("open");
+        onSelect(opt.getAttribute("data-window"));
+      });
+    });
+    menu.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", () => {
+      menu.hidden = true;
+      wrap.classList.remove("open");
+    });
+  }
+
+  function initSensorHistoryChart() {
+    const chartEl = document.getElementById("sensorHistoryChart");
+    const toggleWrap = document.getElementById("sensorHistoryToggles");
+    if (!chartEl || !toggleWrap) return;
+
+    let currentWindow = "HOUR";
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
 
     async function refresh() {
       try {
-        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/latest`);
+        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/history?window=${currentWindow}`);
         const data = await res.json();
-        if (data.temperature == null) {
-          valueEl.textContent = "--";
-          metaEl.textContent = "아직 수신된 데이터가 없습니다";
-          return;
-        }
-        valueEl.textContent = data.temperature.toFixed(1);
-        const measuredAt = new Date(data.measuredAt);
-        const timeText = Number.isNaN(measuredAt.getTime())
-            ? data.measuredAt
-            : measuredAt.toLocaleTimeString("ko-KR");
-        metaEl.textContent = `마지막 수신: ${timeText}`;
+        renderLineChart(chartEl, data.labels, [
+          { label: "내 센서", color: accent, values: data.values },
+        ]);
       } catch (err) {
-        metaEl.textContent = "서버에 연결하지 못했습니다.";
+        chartEl.innerHTML = "";
       }
     }
 
+    wireDropdownToggle(toggleWrap, (window) => {
+      currentWindow = window;
+      refresh();
+    });
+
     refresh();
-    setInterval(refresh, 5000);
+    setInterval(refresh, 60000);
+  }
+
+  function initSensorClusterChart() {
+    const chartEl = document.getElementById("sensorClusterChart");
+    const toggleWrap = document.getElementById("sensorClusterToggles");
+    if (!chartEl || !toggleWrap) return;
+
+    let currentWindow = "HOUR";
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+    const hot = getComputedStyle(document.documentElement).getPropertyValue("--surface-hot").trim();
+
+    async function refresh() {
+      try {
+        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/cluster-comparison?window=${currentWindow}`);
+        const data = await res.json();
+        renderLineChart(chartEl, data.labels, [
+          { label: "내 센서", color: accent, values: data.sensorValues },
+          { label: "군집 평균(추정)", color: hot, values: data.clusterAverageValues },
+        ]);
+      } catch (err) {
+        chartEl.innerHTML = "";
+      }
+    }
+
+    wireDropdownToggle(toggleWrap, (window) => {
+      currentWindow = window;
+      refresh();
+    });
+
+    refresh();
+    setInterval(refresh, 60000);
   }
 
   function initPageNav() {
@@ -408,7 +565,8 @@
     window.addEventListener("resize", renderEffectChart);
     initPageNav();
     initBuildingSearch();
-    initSensorPage();
+    initSensorHistoryChart();
+    initSensorClusterChart();
   }
 
   document.addEventListener("DOMContentLoaded", init);

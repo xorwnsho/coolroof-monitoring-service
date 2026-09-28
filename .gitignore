@@ -40,6 +40,9 @@ out/
 src/main/resources/application-secret.yml
 .env
 
+### 아두이노 스케치 (와이파이 비번/디바이스 키 포함) ###
+sketch_sep27a/
+
 ### MD ###
 SIMULATOR.MD
 FIXSI.MD

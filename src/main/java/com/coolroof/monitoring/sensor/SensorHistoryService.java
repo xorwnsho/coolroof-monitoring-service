@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,6 +41,14 @@ public class SensorHistoryService {
 
     public SensorHistoryResponse getHistory(TimeWindow window) {
         LocalDateTime now = LocalDateTime.now();
+
+        if (window == TimeWindow.THIRTY_SEC) {
+            List<TempReading> raw = sortedRawReadings(window, now);
+            List<String> labels = raw.stream().map(r -> formatLabel(r.getMeasuredAt(), window)).toList();
+            List<Double> values = raw.stream().map(TempReading::getSurfaceTemp).toList();
+            return new SensorHistoryResponse(labels, values);
+        }
+
         List<TempReading> readings = fetchSensorReadings(window, now);
         Map<LocalDateTime, Double> byBucket = bucketAverage(readings, window);
 
@@ -58,13 +67,19 @@ public class SensorHistoryService {
 
     public ClusterComparisonResponse getClusterComparison(TimeWindow window) {
         LocalDateTime now = LocalDateTime.now();
+        double referenceFactor = referenceFactor();
+
+        if (window == TimeWindow.THIRTY_SEC) {
+            List<TempReading> raw = sortedRawReadings(window, now);
+            List<String> labels = raw.stream().map(r -> formatLabel(r.getMeasuredAt(), window)).toList();
+            List<Double> sensorValues = raw.stream().map(TempReading::getSurfaceTemp).toList();
+            List<Double> clusterAverageValues = raw.stream()
+                    .map(r -> referenceSurfaceTemp(r.getMeasuredAt(), referenceFactor)).toList();
+            return new ClusterComparisonResponse(labels, sensorValues, clusterAverageValues);
+        }
+
         List<TempReading> readings = fetchSensorReadings(window, now);
         Map<LocalDateTime, Double> byBucket = bucketAverage(readings, window);
-
-        BuildingThermalModel.StructureInfo structInfo = BuildingThermalModel.STRUCTURE_INFO
-                .getOrDefault(REFERENCE_STRUCTURE, BuildingThermalModel.UNSPECIFIED_STRUCTURE_INFO);
-        BuildingThermalModel.UsageInfo usageInfo = BuildingThermalModel.USAGE_INFO.get(REFERENCE_USAGE);
-        double referenceFactor = structInfo.factor() * (usageInfo != null ? usageInfo.factor() : 1.0);
 
         List<String> labels = new ArrayList<>();
         List<Double> sensorValues = new ArrayList<>();
@@ -75,6 +90,19 @@ public class SensorHistoryService {
             clusterAverageValues.add(referenceSurfaceTemp(t, referenceFactor));
         }
         return new ClusterComparisonResponse(labels, sensorValues, clusterAverageValues);
+    }
+
+    private double referenceFactor() {
+        BuildingThermalModel.StructureInfo structInfo = BuildingThermalModel.STRUCTURE_INFO
+                .getOrDefault(REFERENCE_STRUCTURE, BuildingThermalModel.UNSPECIFIED_STRUCTURE_INFO);
+        BuildingThermalModel.UsageInfo usageInfo = BuildingThermalModel.USAGE_INFO.get(REFERENCE_USAGE);
+        return structInfo.factor() * (usageInfo != null ? usageInfo.factor() : 1.0);
+    }
+
+    private List<TempReading> sortedRawReadings(TimeWindow window, LocalDateTime now) {
+        List<TempReading> readings = new ArrayList<>(fetchSensorReadings(window, now));
+        readings.sort(Comparator.comparing(TempReading::getMeasuredAt));
+        return readings;
     }
 
     private List<TempReading> fetchSensorReadings(TimeWindow window, LocalDateTime now) {
@@ -88,6 +116,7 @@ public class SensorHistoryService {
 
     private LocalDateTime lookbackStart(TimeWindow window, LocalDateTime now) {
         return switch (window) {
+            case THIRTY_SEC -> now.minusMinutes(10);
             case HOUR -> now.minusHours(1);
             case DAY -> now.minusHours(24);
             case WEEK -> now.minusDays(7);
@@ -149,9 +178,11 @@ public class SensorHistoryService {
     }
 
     private String formatLabel(LocalDateTime time, TimeWindow window) {
-        DateTimeFormatter formatter = (window == TimeWindow.WEEK || window == TimeWindow.MONTH)
-                ? DateTimeFormatter.ofPattern("MM/dd")
-                : DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter formatter = switch (window) {
+            case WEEK, MONTH -> DateTimeFormatter.ofPattern("MM/dd");
+            case THIRTY_SEC -> DateTimeFormatter.ofPattern("HH:mm:ss");
+            default -> DateTimeFormatter.ofPattern("HH:mm");
+        };
         return time.format(formatter);
     }
 

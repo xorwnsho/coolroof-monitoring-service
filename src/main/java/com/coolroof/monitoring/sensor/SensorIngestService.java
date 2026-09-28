@@ -7,6 +7,7 @@ import com.coolroof.monitoring.domain.reading.TempReading;
 import com.coolroof.monitoring.domain.reading.TempReadingRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -18,10 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
  * 센서 원시 측정값을 기존 Building/TempReading 스키마에 적재한다.
  * deviceId를 건물 이름으로 써서, 처음 보는 deviceId면 건물을 자동 생성한다
  * (센서가 여러 개로 늘어나도 미리 DB에 건물을 등록해둘 필요가 없다).
+ *
+ * <p>시각은 JVM/컨테이너의 기본 타임존에 의존하지 않도록 항상 Asia/Seoul을 명시해서 계산한다
+ * (기본 타임존이 UTC 등으로 잡히면 측정 시각이 몇 시간씩 어긋나게 저장되는 버그가 생김).
  */
 @Service
 @RequiredArgsConstructor
 public class SensorIngestService {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final BuildingRepository buildingRepository;
     private final TempReadingRepository tempReadingRepository;
@@ -45,7 +51,7 @@ public class SensorIngestService {
         tempReadingRepository.save(TempReading.builder()
                 .building(building)
                 .surfaceTemp(request.temperature())
-                .measuredAt(LocalDateTime.now())
+                .measuredAt(LocalDateTime.now(KST))
                 .build());
     }
 
@@ -74,7 +80,7 @@ public class SensorIngestService {
                         .source(BuildingSource.SENSOR)
                         .build());
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KST);
         LocalDate coolroofDate = today.minusDays(days - 1L);
 
         building.setUsageType("단독주택");

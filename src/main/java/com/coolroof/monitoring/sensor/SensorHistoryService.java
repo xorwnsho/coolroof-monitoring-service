@@ -8,6 +8,7 @@ import com.coolroof.monitoring.domain.reading.TempReading;
 import com.coolroof.monitoring.domain.reading.TempReadingRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -30,6 +31,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SensorHistoryService {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     // 가정한 내 건물 프로필: 단독주택 / 철근콘크리트구조 / 5층 / 옥상면적 150m² / 1990년 준공
     private static final String REFERENCE_STRUCTURE = "철근콘크리트구조";
     private static final String REFERENCE_USAGE = "단독주택";
@@ -40,7 +43,7 @@ public class SensorHistoryService {
     private final TempReadingRepository tempReadingRepository;
 
     public SensorHistoryResponse getHistory(TimeWindow window) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(KST);
 
         if (window == TimeWindow.THIRTY_SEC) {
             List<TempReading> raw = sortedRawReadings(window, now);
@@ -66,7 +69,7 @@ public class SensorHistoryService {
     }
 
     public ClusterComparisonResponse getClusterComparison(TimeWindow window) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(KST);
         double referenceFactor = referenceFactor();
 
         if (window == TimeWindow.THIRTY_SEC) {

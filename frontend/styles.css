@@ -255,6 +255,11 @@ main { min-width: 0; padding: 22px 28px 48px; }
   grid-template-columns: 1fr 1fr;
   gap: 18px;
 }
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 18px;
+}
 
 /* 헤더 아래(밝은 배경 구간)는 밝은 흰 글씨 대신 짙은 톤으로 전환 */
 .content-lower {
@@ -737,6 +742,7 @@ table.mon .busage { font-size: 11px; color: var(--ink-muted); }
 @media (max-width: 1080px) {
   .grid-2 { grid-template-columns: 1fr; }
   .grid-2-equal { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
   .grid-bottom { grid-template-columns: 1fr; }
   .district-row { grid-template-columns: repeat(3, 1fr); }
 }

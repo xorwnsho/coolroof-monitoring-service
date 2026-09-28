@@ -13,11 +13,11 @@
 <body>
   <div class="shell">
     <nav class="icon-rail">
-      <button class="railbtn active" title="나의 건물" aria-label="나의 건물" data-page="page-sensor">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
-      </button>
-      <button class="railbtn" title="대시보드" aria-label="대시보드" data-page="page-dashboard">
+      <button class="railbtn active" title="대시보드" aria-label="대시보드" data-page="page-dashboard">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <button class="railbtn" title="나의 건물" aria-label="나의 건물" data-page="page-sensor">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
       </button>
       <button class="railbtn" title="쿨루프 시뮬레이터" aria-label="쿨루프 시뮬레이터" data-page="page-simulator">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.2 4.2l1.55 1.55M18.25 18.25l1.55 1.55M3 12h2.2M18.8 12H21M4.2 19.8l1.55-1.55M18.25 5.75l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -60,12 +60,44 @@
       <div class="pageheader">
         <div>
           <h1>Monitoring Dashboard</h1>
-          <div class="breadcrumb"><span class="current" id="breadcrumbCurrent">센서 연동</span></div>
+          <div class="breadcrumb"><span class="current" id="breadcrumbCurrent">전체현황</span></div>
         </div>
       </div>
 
       <div class="content-lower">
-      <section id="page-dashboard" class="page-view" hidden>
+      <section id="page-dashboard" class="page-view">
+      <div class="grid-3">
+        <div class="card">
+          <div style="padding:20px 22px;">
+            <div style="font-size:13px; color:var(--ink-muted);">
+              누적 탄소 감축 기여도
+            </div>
+            <div style="font-size:24px; font-weight:900; color:var(--ink); margin-top:10px;">1,240 tCO₂</div>
+            <div style="font-size:12.5px; color:var(--medium); margin-top:6px;">소나무 약 9만 주 식재 효과</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="padding:20px 22px;">
+            <div style="font-size:13px; color:var(--ink-muted);">
+              평균 냉방 에너지 절감률
+            </div>
+            <div style="font-size:24px; font-weight:900; color:var(--ink); margin-top:10px;">▼ 24.5%</div>
+            <div style="font-size:12.5px; color:var(--medium); margin-top:6px;">지속적인 성능 유지 중</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="padding:20px 22px;">
+            <div style="font-size:13px; color:var(--ink-muted);">
+              불필요한 중복 시공 방지
+            </div>
+            <div style="font-size:24px; font-weight:900; color:var(--ink); margin-top:10px;">지자체 예산 35% 절약</div>
+            <div style="font-size:12.5px; color:var(--medium); margin-top:6px;">골든타임 기반 최적 재도장</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-gap-sm"></div>
+
       <div class="grid-2">
         <div class="card">
           <div class="card-head">
@@ -85,13 +117,13 @@
           <div class="card">
             <div class="card-head">
               <h2>효과 요약</h2>
-              <span class="chip-muted">실증 데이터 기반</span>
+              <span class="chip-muted">예시</span>
             </div>
             <div class="stat2x2" style="margin:8px 22px 20px;">
               <div class="cell"><div class="lbl">여름철 최대 온도차</div><div class="val good num">-22℃</div></div>
               <div class="cell"><div class="lbl">평균 표면온도 저감</div><div class="val good num">-9.2℃</div></div>
-              <div class="cell"><div class="lbl">냉방에너지 절감</div><div class="val good num">26.4%</div></div>
-              <div class="cell"><div class="lbl">근거 사례</div><div class="val num" style="font-size:14px;">관악구·서울시 SH</div></div>
+              <div class="cell"><div class="lbl">냉방에너지 절감</div><div class="val good num">24.5%</div></div>
+              <div class="cell"><div class="lbl">근거 사례</div><div class="val num" style="font-size:14px;">전국 건축물대장 실측 기반</div></div>
             </div>
           </div>
 
@@ -107,6 +139,47 @@
               <br><br>
               <b style="color:var(--ink);">결론: 옥상 표면온도와 냉방비를 같이 낮추고 싶다면 지금 쿨루프를 하세요.</b>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-gap-sm"></div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>가장 효율 좋은 구조 Top 3</h2>
+          <span class="chip-muted">쿨루프 표면온도 저감 효과 기준</span>
+        </div>
+        <div style="padding: 6px 22px 22px; display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; flex:none;">1</div>
+            <div style="flex:1;">
+              <div style="font-size:14px; color:var(--ink);">철골구조</div>
+              <div style="height:6px; border-radius:999px; background:var(--glass-border); margin-top:6px; overflow:hidden;">
+                <div style="height:100%; width:42%; background:var(--accent); border-radius:999px;"></div>
+              </div>
+            </div>
+            <div style="font-weight:700; color:var(--accent); font-size:15px; flex:none; width:44px; text-align:right;">42%</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; flex:none;">2</div>
+            <div style="flex:1;">
+              <div style="font-size:14px; color:var(--ink);">철골철근콘크리트구조</div>
+              <div style="height:6px; border-radius:999px; background:var(--glass-border); margin-top:6px; overflow:hidden;">
+                <div style="height:100%; width:39%; background:var(--accent); border-radius:999px;"></div>
+              </div>
+            </div>
+            <div style="font-weight:700; color:var(--accent); font-size:15px; flex:none; width:44px; text-align:right;">39%</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; flex:none;">3</div>
+            <div style="flex:1;">
+              <div style="font-size:14px; color:var(--ink);">철근콘크리트구조</div>
+              <div style="height:6px; border-radius:999px; background:var(--glass-border); margin-top:6px; overflow:hidden;">
+                <div style="height:100%; width:36%; background:var(--accent); border-radius:999px;"></div>
+              </div>
+            </div>
+            <div style="font-weight:700; color:var(--accent); font-size:15px; flex:none; width:44px; text-align:right;">36%</div>
           </div>
         </div>
       </div>
@@ -319,7 +392,7 @@
       </div>
       </section>
 
-      <section id="page-sensor" class="page-view">
+      <section id="page-sensor" class="page-view" hidden>
 
       <div class="grid-2-equal">
         <div class="card">

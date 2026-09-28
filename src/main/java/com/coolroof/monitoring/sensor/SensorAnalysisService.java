@@ -36,7 +36,7 @@ public class SensorAnalysisService {
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private static final int VALID_HOUR_START = 10;
     private static final int VALID_HOUR_END = 17;
-    private static final int ANALYSIS_WINDOW_DAYS = 90;
+    private static final int ANALYSIS_WINDOW_DAYS = 365;
 
     private static final double NORMAL_THRESHOLD = -3.0;
     private static final double REPAINT_THRESHOLD = 0.0;
@@ -92,7 +92,8 @@ public class SensorAnalysisService {
                     avgGap,
                     null,
                     trendSlopePerYear,
-                    repaintForecast));
+                    repaintForecast,
+                    ANALYSIS_WINDOW_DAYS));
         } catch (Exception e) {
             log.warn("센서 AI 요약 생성 실패", e);
             return null;

@@ -6,6 +6,7 @@ import com.coolroof.monitoring.domain.building.BuildingRepository;
 import com.coolroof.monitoring.domain.building.BuildingSource;
 import com.coolroof.monitoring.domain.reading.TempReading;
 import com.coolroof.monitoring.domain.reading.TempReadingRepository;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -42,22 +43,22 @@ public class SensorHistoryService {
     private final BuildingRepository buildingRepository;
     private final TempReadingRepository tempReadingRepository;
 
-    public SensorHistoryResponse getHistory(TimeWindow window) {
-        LocalDateTime now = LocalDateTime.now(KST);
+    public SensorHistoryResponse getHistory(TimeWindow window, int offset, int span) {
+        LocalDateTime now = anchorNow(window, offset);
 
         if (window == TimeWindow.THIRTY_SEC) {
-            List<TempReading> raw = sortedRawReadings(window, now);
+            List<TempReading> raw = sortedRawReadings(window, now, span);
             List<String> labels = raw.stream().map(r -> formatLabel(r.getMeasuredAt(), window)).toList();
             List<Double> values = raw.stream().map(TempReading::getSurfaceTemp).toList();
             return new SensorHistoryResponse(labels, values);
         }
 
-        List<TempReading> readings = fetchSensorReadings(window, now);
+        List<TempReading> readings = fetchSensorReadings(window, now, span);
         Map<LocalDateTime, Double> byBucket = bucketAverage(readings, window);
 
         List<String> labels = new ArrayList<>();
         List<Double> values = new ArrayList<>();
-        for (LocalDateTime t : buildTimeline(window, now)) {
+        for (LocalDateTime t : buildTimeline(window, now, span)) {
             Double v = byBucket.get(t);
             if (v == null) {
                 continue; // 실측 없는 시간대는 그래프에서 건너뛴다
@@ -68,12 +69,12 @@ public class SensorHistoryService {
         return new SensorHistoryResponse(labels, values);
     }
 
-    public ClusterComparisonResponse getClusterComparison(TimeWindow window) {
-        LocalDateTime now = LocalDateTime.now(KST);
+    public ClusterComparisonResponse getClusterComparison(TimeWindow window, int offset, int span) {
+        LocalDateTime now = anchorNow(window, offset);
         double referenceFactor = referenceFactor();
 
         if (window == TimeWindow.THIRTY_SEC) {
-            List<TempReading> raw = sortedRawReadings(window, now);
+            List<TempReading> raw = sortedRawReadings(window, now, span);
             List<String> labels = raw.stream().map(r -> formatLabel(r.getMeasuredAt(), window)).toList();
             List<Double> sensorValues = raw.stream().map(TempReading::getSurfaceTemp).toList();
             List<Double> clusterAverageValues = raw.stream()
@@ -81,18 +82,34 @@ public class SensorHistoryService {
             return new ClusterComparisonResponse(labels, sensorValues, clusterAverageValues);
         }
 
-        List<TempReading> readings = fetchSensorReadings(window, now);
+        List<TempReading> readings = fetchSensorReadings(window, now, span);
         Map<LocalDateTime, Double> byBucket = bucketAverage(readings, window);
 
         List<String> labels = new ArrayList<>();
         List<Double> sensorValues = new ArrayList<>();
         List<Double> clusterAverageValues = new ArrayList<>();
-        for (LocalDateTime t : buildTimeline(window, now)) {
+        for (LocalDateTime t : buildTimeline(window, now, span)) {
             labels.add(formatLabel(t, window));
             sensorValues.add(byBucket.get(t));
             clusterAverageValues.add(referenceSurfaceTemp(t, referenceFactor));
         }
         return new ClusterComparisonResponse(labels, sensorValues, clusterAverageValues);
+    }
+
+    /** 드래그로 과거 구간을 볼 때 쓰는 기준시점 이동. offset=1이면 현재 창 길이만큼 통째로 뒤로 민다. */
+    private LocalDateTime anchorNow(TimeWindow window, int offset) {
+        LocalDateTime now = LocalDateTime.now(KST);
+        if (offset <= 0) {
+            return now;
+        }
+        return switch (window) {
+            case THIRTY_SEC -> now.minusMinutes(10L * offset);
+            case HOUR -> now.minusHours(offset);
+            case DAY -> now.minusHours(24L * offset);
+            case WEEK -> now.minusDays(7L * offset);
+            case MONTH -> now.minusDays(30L * offset);
+            case YEAR -> now.minusDays(365L * offset);
+        };
     }
 
     double referenceFactor() {
@@ -102,32 +119,39 @@ public class SensorHistoryService {
         return structInfo.factor() * (usageInfo != null ? usageInfo.factor() : 1.0);
     }
 
-    private List<TempReading> sortedRawReadings(TimeWindow window, LocalDateTime now) {
-        List<TempReading> readings = new ArrayList<>(fetchSensorReadings(window, now));
+    private List<TempReading> sortedRawReadings(TimeWindow window, LocalDateTime now, int span) {
+        List<TempReading> readings = new ArrayList<>(fetchSensorReadings(window, now, span));
         readings.sort(Comparator.comparing(TempReading::getMeasuredAt));
         return readings;
     }
 
-    private List<TempReading> fetchSensorReadings(TimeWindow window, LocalDateTime now) {
+    private List<TempReading> fetchSensorReadings(TimeWindow window, LocalDateTime now, int span) {
         Building building = buildingRepository.findFirstBySource(BuildingSource.SENSOR).orElse(null);
         if (building == null) {
             return List.of();
         }
         return tempReadingRepository.findByBuildingIdAndMeasuredAtBetween(
-                building.getId(), lookbackStart(window, now), now);
+                building.getId(), lookbackStart(window, now, span), now);
     }
 
-    private LocalDateTime lookbackStart(TimeWindow window, LocalDateTime now) {
+    /**
+     * span은 화면에 보이는 창 길이의 배수로 과거 데이터를 통째로 더 받아오는 버퍼 배수다.
+     * (프론트에서 드래그로 스크롤할 여유 구간을 미리 확보해서, 드래그할 때마다 재조회하지 않고
+     * 받아둔 버퍼 안에서만 화면을 옮기게 하기 위함 — span=1이면 기존과 동일한 창 하나만 반환.)
+     */
+    private LocalDateTime lookbackStart(TimeWindow window, LocalDateTime now, int span) {
+        long s = Math.max(1, span);
         return switch (window) {
-            case THIRTY_SEC -> now.minusMinutes(10);
-            case HOUR -> now.minusHours(1);
-            case DAY -> now.minusHours(24);
-            case WEEK -> now.minusDays(7);
-            case MONTH -> now.minusDays(30);
+            case THIRTY_SEC -> now.minusMinutes(10L * s);
+            case HOUR -> now.minusHours(s);
+            case DAY -> now.minusHours(24L * s);
+            case WEEK -> now.minusDays(7L * s);
+            case MONTH -> now.minusDays(30L * s);
+            case YEAR -> now.minusDays(365L * s);
         };
     }
 
-    /** WEEK/MONTH는 하루 단위 평균, HOUR/DAY는 시간 단위 평균으로 묶는다 (센서 자체가 1시간에 1건이라 시간 단위가 곧 원본값). */
+    /** WEEK/MONTH는 하루 단위, YEAR는 주 단위, HOUR/DAY는 시간 단위로 평균 묶는다 (센서 자체가 1시간에 1건이라 시간 단위가 곧 원본값). */
     private Map<LocalDateTime, Double> bucketAverage(List<TempReading> readings, TimeWindow window) {
         ChronoUnit unit = bucketUnit(window);
         Map<LocalDateTime, List<Double>> grouped = new TreeMap<>();
@@ -141,39 +165,55 @@ public class SensorHistoryService {
     }
 
     private ChronoUnit bucketUnit(TimeWindow window) {
+        if (window == TimeWindow.YEAR) {
+            return ChronoUnit.WEEKS;
+        }
         return (window == TimeWindow.WEEK || window == TimeWindow.MONTH) ? ChronoUnit.DAYS : ChronoUnit.HOURS;
     }
 
     private LocalDateTime truncateTo(LocalDateTime dt, ChronoUnit unit) {
+        if (unit == ChronoUnit.WEEKS) {
+            return dt.toLocalDate().with(DayOfWeek.MONDAY).atStartOfDay();
+        }
         return unit == ChronoUnit.DAYS ? dt.toLocalDate().atStartOfDay() : dt.truncatedTo(ChronoUnit.HOURS);
     }
 
-    /** 실측 유무와 무관하게 그래프 x축에 표시할 시점 목록을 만든다 (군집 평균선은 이 전체 구간에 다 그려짐). */
-    private List<LocalDateTime> buildTimeline(TimeWindow window, LocalDateTime now) {
+    /**
+     * 실측 유무와 무관하게 그래프 x축에 표시할 시점 목록을 만든다 (군집 평균선은 이 전체 구간에 다 그려짐).
+     * span배만큼 구간을 통째로 늘려서, 화면엔 뒤쪽 1/span만 보여주고 나머지는 드래그용 버퍼로 쓴다.
+     */
+    private List<LocalDateTime> buildTimeline(TimeWindow window, LocalDateTime now, int span) {
+        int s = Math.max(1, span);
         List<LocalDateTime> timeline = new ArrayList<>();
         switch (window) {
             case HOUR -> {
-                LocalDateTime start = now.minusHours(1).truncatedTo(ChronoUnit.HOURS);
-                for (int i = 0; i <= 1; i++) {
+                LocalDateTime start = now.minusHours(s).truncatedTo(ChronoUnit.HOURS);
+                for (int i = 0; i <= s; i++) {
                     timeline.add(start.plusHours(i));
                 }
             }
             case DAY -> {
-                LocalDateTime start = now.minusHours(23).truncatedTo(ChronoUnit.HOURS);
-                for (int i = 0; i <= 23; i++) {
+                LocalDateTime start = now.minusHours(23L * s).truncatedTo(ChronoUnit.HOURS);
+                for (int i = 0; i <= 23 * s; i++) {
                     timeline.add(start.plusHours(i));
                 }
             }
             case WEEK -> {
-                LocalDate start = now.toLocalDate().minusDays(6);
-                for (int i = 0; i <= 6; i++) {
+                LocalDate start = now.toLocalDate().minusDays(6L * s);
+                for (int i = 0; i <= 6 * s; i++) {
                     timeline.add(start.plusDays(i).atStartOfDay());
                 }
             }
             case MONTH -> {
-                LocalDate start = now.toLocalDate().minusDays(29);
-                for (int i = 0; i <= 29; i++) {
+                LocalDate start = now.toLocalDate().minusDays(29L * s);
+                for (int i = 0; i <= 29 * s; i++) {
                     timeline.add(start.plusDays(i).atStartOfDay());
+                }
+            }
+            case YEAR -> {
+                LocalDate startMonday = now.toLocalDate().with(DayOfWeek.MONDAY).minusWeeks(51L * s);
+                for (int i = 0; i <= 51 * s; i++) {
+                    timeline.add(startMonday.plusWeeks(i).atStartOfDay());
                 }
             }
         }
@@ -182,7 +222,7 @@ public class SensorHistoryService {
 
     private String formatLabel(LocalDateTime time, TimeWindow window) {
         DateTimeFormatter formatter = switch (window) {
-            case WEEK, MONTH -> DateTimeFormatter.ofPattern("MM/dd");
+            case WEEK, MONTH, YEAR -> DateTimeFormatter.ofPattern("MM/dd");
             case THIRTY_SEC -> DateTimeFormatter.ofPattern("HH:mm:ss");
             default -> DateTimeFormatter.ofPattern("HH:mm");
         };

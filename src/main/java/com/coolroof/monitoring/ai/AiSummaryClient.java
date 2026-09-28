@@ -59,7 +59,7 @@ public class AiSummaryClient {
                 용도: %s
                 쿨루프 시공일: %s
                 판정(status): %s
-                최근 90일 평균 표면-외기 온도차(avgTempGap): %.2f℃
+                최근 %d일 평균 표면-외기 온도차(avgTempGap): %.2f℃
                 동종 건물군 평균 온도차(peerGap): %s
                 연간 온도차 상승률(degradationTrend): %s
                 예상 재도장 필요 시점(repaintForecast): %s
@@ -70,6 +70,7 @@ public class AiSummaryClient {
                 r.usageType(),
                 r.coolroofDate(),
                 r.status(),
+                r.analysisWindowDays(),
                 r.avgTempGap(),
                 r.peerGap() == null ? "비교 대상 없음" : r.peerGap() + "℃",
                 r.degradationTrend() == null ? "산출 불가" : r.degradationTrend() + "℃/년",

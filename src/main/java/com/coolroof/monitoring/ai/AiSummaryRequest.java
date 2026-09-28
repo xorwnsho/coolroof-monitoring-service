@@ -12,6 +12,7 @@ public record AiSummaryRequest(
         double avgTempGap,
         Double peerGap,
         Double degradationTrend,
-        LocalDate repaintForecast
+        LocalDate repaintForecast,
+        int analysisWindowDays
 ) {
 }

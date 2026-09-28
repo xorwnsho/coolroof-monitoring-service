@@ -128,7 +128,8 @@
 
   // ---------------- 범용 시계열 라인차트 (null 허용, 시리즈 여러 개) ----------------
   // series: [{ label, color, values }], values[i]가 null이면 그 지점은 건너뛰고 선이 끊긴다.
-  function renderLineChart(el, labels, series) {
+  // animate=false면 그려지는 애니메이션 없이 즉시 그림 (드래그로 스크럽할 때 매 프레임 다시 그리는 용도).
+  function renderLineChart(el, labels, series, { animate = true } = {}) {
     if (!el) return;
     const w = el.clientWidth || 420;
     const h = el.clientHeight || 240;
@@ -180,6 +181,7 @@
       svg.appendChild(t);
     });
 
+    const linePaths = [];
     series.forEach((s) => {
       let d = "";
       let drawing = false;
@@ -197,6 +199,7 @@
       path.setAttribute("stroke-linecap", "round");
       path.setAttribute("stroke-linejoin", "round");
       svg.appendChild(path);
+      linePaths.push(path);
     });
 
     const overlay = document.createElementNS(ns, "rect");
@@ -221,6 +224,20 @@
 
     el.innerHTML = "";
     el.appendChild(svg);
+
+    if (!animate) return;
+
+    // 그래프가 왼쪽에서 오른쪽으로 그려지는 애니메이션 (stroke-dasharray 트릭)
+    linePaths.forEach((path) => {
+      const length = path.getTotalLength();
+      path.style.strokeDasharray = length;
+      path.style.strokeDashoffset = length;
+      path.getBoundingClientRect(); // 강제 리플로우 — 초기 상태를 브라우저가 인식하게 함
+      path.style.transition = "stroke-dashoffset 700ms ease-out";
+      setTimeout(() => {
+        path.style.strokeDashoffset = "0";
+      }, 20);
+    });
   }
 
   // ---------------- 군집별 비교 (자연어 질의 → 백엔드 실측 분석) ----------------
@@ -479,21 +496,106 @@
     });
   }
 
+  // 차트를 좌우로 드래그하면 주식 차트처럼 화면 안의 데이터가 실시간으로 스크럽된다.
+  // 실제로는 화면 창보다 BUFFER_SPAN배 넓게 미리 받아둔 버퍼 안에서 보이는 구간(viewport)만
+  // 옮기는 방식이라 드래그 중엔 네트워크 요청 없이 매 프레임 즉시 다시 그려진다.
+  // 오른쪽으로 끌면 과거 쪽으로, 왼쪽으로 끌면 현재 쪽으로(맨 끝에서 멈춤) 이동한다.
+  function wireChartPan(chartEl, resetBtn, api) {
+    let dragging = false;
+    let startX = 0;
+    let startViewportStart = 0;
+    let pendingDeltaX = null;
+    let rafScheduled = false;
+
+    function applyDelta(deltaX) {
+      const width = chartEl.clientWidth || 1;
+      const viewportSize = api.getViewportSize();
+      const bufferLen = api.getBufferLength();
+      const deltaIndex = Math.round((deltaX / width) * viewportSize);
+      const maxStart = Math.max(0, bufferLen - viewportSize);
+      const next = Math.min(maxStart, Math.max(0, startViewportStart - deltaIndex));
+      api.setViewportStart(next);
+    }
+
+    function scheduleApply() {
+      if (rafScheduled) return;
+      rafScheduled = true;
+      requestAnimationFrame(() => {
+        rafScheduled = false;
+        if (dragging && pendingDeltaX != null) applyDelta(pendingDeltaX);
+      });
+    }
+
+    function startDrag(clientX) {
+      dragging = true;
+      startX = clientX;
+      startViewportStart = api.getViewportStart();
+      chartEl.classList.add("dragging");
+      hideTip();
+    }
+
+    function onMove(clientX) {
+      if (!dragging) return;
+      pendingDeltaX = clientX - startX;
+      scheduleApply();
+    }
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      pendingDeltaX = null;
+      chartEl.classList.remove("dragging");
+    }
+
+    chartEl.addEventListener("mousedown", (e) => { startDrag(e.clientX); e.preventDefault(); });
+    document.addEventListener("mousemove", (e) => onMove(e.clientX));
+    document.addEventListener("mouseup", endDrag);
+
+    chartEl.addEventListener("touchstart", (e) => startDrag(e.touches[0].clientX), { passive: true });
+    chartEl.addEventListener("touchmove", (e) => onMove(e.touches[0].clientX), { passive: true });
+    chartEl.addEventListener("touchend", endDrag);
+
+    chartEl.addEventListener("dblclick", () => api.onReset());
+    if (resetBtn) resetBtn.addEventListener("click", () => api.onReset());
+  }
+
+  // 화면에 보이는 창(window)보다 이만큼 더 넓게 데이터를 미리 받아서 드래그용 버퍼로 쓴다.
+  const CHART_BUFFER_SPAN = 6;
+
   function initSensorHistoryChart() {
     const chartEl = document.getElementById("sensorHistoryChart");
     const toggleWrap = document.getElementById("sensorHistoryToggles");
+    const resetBtn = document.getElementById("sensorHistoryPanReset");
     if (!chartEl || !toggleWrap) return;
 
     let currentWindow = "HOUR";
+    let bufferLabels = [];
+    let bufferValues = [];
+    let viewportSize = 1;
+    let viewportStart = 0;
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
 
-    async function refresh() {
+    function isAtLive() {
+      return viewportStart >= bufferLabels.length - viewportSize;
+    }
+
+    function renderSlice(animate) {
+      if (resetBtn) resetBtn.hidden = isAtLive();
+      const labels = bufferLabels.slice(viewportStart, viewportStart + viewportSize);
+      const values = bufferValues.slice(viewportStart, viewportStart + viewportSize);
+      renderLineChart(chartEl, labels, [{ label: "내 센서", color: accent, values }], { animate });
+    }
+
+    async function fetchBuffer() {
       try {
-        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/history?window=${currentWindow}`);
+        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/history?window=${currentWindow}&span=${CHART_BUFFER_SPAN}`);
         const data = await res.json();
-        renderLineChart(chartEl, data.labels, [
-          { label: "내 센서", color: accent, values: data.values },
-        ]);
+        bufferLabels = data.labels;
+        bufferValues = data.values;
+        viewportSize = Math.min(bufferLabels.length,
+            Math.max(2, Math.round((bufferLabels.length - 1) / CHART_BUFFER_SPAN) + 1));
+        viewportStart = Math.max(0, bufferLabels.length - viewportSize);
+        renderSlice(true);
       } catch (err) {
         chartEl.innerHTML = "";
       }
@@ -501,30 +603,62 @@
 
     wireDropdownToggle(toggleWrap, (window) => {
       currentWindow = window;
-      refresh();
+      fetchBuffer();
     });
 
-    refresh();
-    setInterval(refresh, 60000);
+    wireChartPan(chartEl, resetBtn, {
+      getViewportStart: () => viewportStart,
+      getViewportSize: () => viewportSize,
+      getBufferLength: () => bufferLabels.length,
+      setViewportStart: (v) => { viewportStart = v; renderSlice(false); },
+      onReset: () => fetchBuffer(),
+    });
+
+    fetchBuffer();
+    setInterval(() => { if (isAtLive()) fetchBuffer(); }, 60000);
   }
 
   function initSensorClusterChart() {
     const chartEl = document.getElementById("sensorClusterChart");
     const toggleWrap = document.getElementById("sensorClusterToggles");
+    const resetBtn = document.getElementById("sensorClusterPanReset");
     if (!chartEl || !toggleWrap) return;
 
     let currentWindow = "HOUR";
+    let bufferLabels = [];
+    let bufferSensorValues = [];
+    let bufferClusterValues = [];
+    let viewportSize = 1;
+    let viewportStart = 0;
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
     const hot = getComputedStyle(document.documentElement).getPropertyValue("--surface-hot").trim();
 
-    async function refresh() {
+    function isAtLive() {
+      return viewportStart >= bufferLabels.length - viewportSize;
+    }
+
+    function renderSlice(animate) {
+      if (resetBtn) resetBtn.hidden = isAtLive();
+      const labels = bufferLabels.slice(viewportStart, viewportStart + viewportSize);
+      const sensorValues = bufferSensorValues.slice(viewportStart, viewportStart + viewportSize);
+      const clusterAverageValues = bufferClusterValues.slice(viewportStart, viewportStart + viewportSize);
+      renderLineChart(chartEl, labels, [
+        { label: "내 센서", color: accent, values: sensorValues },
+        { label: "군집 평균(추정)", color: hot, values: clusterAverageValues },
+      ], { animate });
+    }
+
+    async function fetchBuffer() {
       try {
-        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/cluster-comparison?window=${currentWindow}`);
+        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/cluster-comparison?window=${currentWindow}&span=${CHART_BUFFER_SPAN}`);
         const data = await res.json();
-        renderLineChart(chartEl, data.labels, [
-          { label: "내 센서", color: accent, values: data.sensorValues },
-          { label: "군집 평균(추정)", color: hot, values: data.clusterAverageValues },
-        ]);
+        bufferLabels = data.labels;
+        bufferSensorValues = data.sensorValues;
+        bufferClusterValues = data.clusterAverageValues;
+        viewportSize = Math.min(bufferLabels.length,
+            Math.max(2, Math.round((bufferLabels.length - 1) / CHART_BUFFER_SPAN) + 1));
+        viewportStart = Math.max(0, bufferLabels.length - viewportSize);
+        renderSlice(true);
       } catch (err) {
         chartEl.innerHTML = "";
       }
@@ -532,11 +666,19 @@
 
     wireDropdownToggle(toggleWrap, (window) => {
       currentWindow = window;
-      refresh();
+      fetchBuffer();
     });
 
-    refresh();
-    setInterval(refresh, 60000);
+    wireChartPan(chartEl, resetBtn, {
+      getViewportStart: () => viewportStart,
+      getViewportSize: () => viewportSize,
+      getBufferLength: () => bufferLabels.length,
+      setViewportStart: (v) => { viewportStart = v; renderSlice(false); },
+      onReset: () => fetchBuffer(),
+    });
+
+    fetchBuffer();
+    setInterval(() => { if (isAtLive()) fetchBuffer(); }, 60000);
   }
 
   function initSensorAnalysis() {

@@ -118,7 +118,8 @@ public class AnalysisBatchService {
                     avgGap,
                     peerGap,
                     trendSlopePerYear,
-                    repaintForecast));
+                    repaintForecast,
+                    ANALYSIS_WINDOW_DAYS));
         } catch (Exception e) {
             log.warn("AI 요약 생성 실패: buildingId={}", building.getId(), e);
             return null;

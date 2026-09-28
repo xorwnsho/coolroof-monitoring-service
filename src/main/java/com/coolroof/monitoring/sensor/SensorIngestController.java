@@ -57,13 +57,17 @@ public class SensorIngestController {
     }
 
     @GetMapping("/api/sensor/history")
-    public SensorHistoryResponse history(@RequestParam(defaultValue = "HOUR") TimeWindow window) {
-        return sensorHistoryService.getHistory(window);
+    public SensorHistoryResponse history(@RequestParam(defaultValue = "HOUR") TimeWindow window,
+                                          @RequestParam(defaultValue = "0") int offset,
+                                          @RequestParam(defaultValue = "1") int span) {
+        return sensorHistoryService.getHistory(window, offset, span);
     }
 
     @GetMapping("/api/sensor/cluster-comparison")
-    public ClusterComparisonResponse clusterComparison(@RequestParam(defaultValue = "HOUR") TimeWindow window) {
-        return sensorHistoryService.getClusterComparison(window);
+    public ClusterComparisonResponse clusterComparison(@RequestParam(defaultValue = "HOUR") TimeWindow window,
+                                                         @RequestParam(defaultValue = "0") int offset,
+                                                         @RequestParam(defaultValue = "1") int span) {
+        return sensorHistoryService.getClusterComparison(window, offset, span);
     }
 
     @GetMapping("/api/sensor/analysis")

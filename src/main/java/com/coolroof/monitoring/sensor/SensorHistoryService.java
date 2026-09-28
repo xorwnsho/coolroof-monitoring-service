@@ -44,7 +44,7 @@ public class SensorHistoryService {
     private final TempReadingRepository tempReadingRepository;
 
     public SensorHistoryResponse getHistory(TimeWindow window, int offset, int span) {
-        LocalDateTime now = anchorNow(window, offset);
+        LocalDateTime now = anchorNow(window, offset, liveAnchor());
 
         if (window == TimeWindow.THIRTY_SEC) {
             List<TempReading> raw = sortedRawReadings(window, now, span);
@@ -70,7 +70,7 @@ public class SensorHistoryService {
     }
 
     public ClusterComparisonResponse getClusterComparison(TimeWindow window, int offset, int span) {
-        LocalDateTime now = anchorNow(window, offset);
+        LocalDateTime now = anchorNow(window, offset, liveAnchor());
         double referenceFactor = referenceFactor();
 
         if (window == TimeWindow.THIRTY_SEC) {
@@ -96,9 +96,20 @@ public class SensorHistoryService {
         return new ClusterComparisonResponse(labels, sensorValues, clusterAverageValues);
     }
 
+    /**
+     * 그래프의 "현재 시점" 기준. 센서가 계속 값을 보내고 있으면 실제 지금과 거의 같지만,
+     * ESP32 연결이 끊겨서 최근 실측이 없으면 "마지막으로 값이 들어온 시점"을 기준으로 삼는다.
+     * 그래야 연결이 끊긴 뒤에도 그래프가 텅 비지 않고 마지막 실측 구간을 그대로 보여준다.
+     */
+    private LocalDateTime liveAnchor() {
+        return buildingRepository.findFirstBySource(BuildingSource.SENSOR)
+                .flatMap(b -> tempReadingRepository.findTopByBuildingIdOrderByMeasuredAtDesc(b.getId()))
+                .map(TempReading::getMeasuredAt)
+                .orElseGet(() -> LocalDateTime.now(KST));
+    }
+
     /** 드래그로 과거 구간을 볼 때 쓰는 기준시점 이동. offset=1이면 현재 창 길이만큼 통째로 뒤로 민다. */
-    private LocalDateTime anchorNow(TimeWindow window, int offset) {
-        LocalDateTime now = LocalDateTime.now(KST);
+    private LocalDateTime anchorNow(TimeWindow window, int offset, LocalDateTime now) {
         if (offset <= 0) {
             return now;
         }

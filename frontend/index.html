@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cool Roof Monitoring</title>
+  <link rel="icon" type="image/svg+xml" href="logo.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -12,17 +13,17 @@
 <body>
   <div class="shell">
     <nav class="icon-rail">
-      <button class="railbtn active" title="대시보드" aria-label="대시보드" data-page="page-dashboard">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
+      <button class="railbtn active" title="나의 건물" aria-label="나의 건물" data-page="page-sensor">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
       </button>
-      <button class="railbtn" title="군집별 비교" aria-label="군집별 비교" data-page="page-cluster">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2"/></svg>
+      <button class="railbtn" title="대시보드" aria-label="대시보드" data-page="page-dashboard">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
       </button>
       <button class="railbtn" title="쿨루프 시뮬레이터" aria-label="쿨루프 시뮬레이터" data-page="page-simulator">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><path d="M12 3v2.2M12 18.8V21M4.2 4.2l1.55 1.55M18.25 18.25l1.55 1.55M3 12h2.2M18.8 12H21M4.2 19.8l1.55-1.55M18.25 5.75l1.55-1.55" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <button class="railbtn" title="센서 연동" aria-label="센서 연동" data-page="page-sensor">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M5 12a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
+      <button class="railbtn" title="군집별 비교" aria-label="군집별 비교" data-page="page-cluster">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="2"/></svg>
       </button>
       <div class="spacer"></div>
       <button class="railbtn" title="AI 리포트 / 문의하기" aria-label="AI 리포트 문의하기">
@@ -35,18 +36,36 @@
 
     <main>
       <div class="topbar">
-        <div class="brandmark">Cool Roof Monitoring</div>
+        <div class="brandmark">
+          <svg width="40" height="32" viewBox="110 185 800 650" fill="none" stroke-width="19" stroke-linejoin="miter" stroke-linecap="butt">
+            <g stroke="#FFFFFF">
+              <path d="M215 817 V610 L305 515 H520 L612 615"/>
+              <path d="M305 515 L408 625 V808"/>
+              <path d="M206 808 H820 V624 H408"/>
+              <path d="M612 624 V808"/>
+              <path d="M680 624 V435"/>
+              <path d="M329 415 L432 302 L516 389"/>
+              <path d="M430 302 H612 L688 385"/>
+              <path d="M353 400 V458"/>
+            </g>
+            <g stroke="#175C57">
+              <path d="M130 808 H184 V600 L295 480 H520 V413 H695 L832 268"/>
+              <polygon points="793,232 895,205 873,308" fill="#175C57" stroke="none"/>
+            </g>
+          </svg>
+          Cool Roof Monitoring
+        </div>
       </div>
 
       <div class="pageheader">
         <div>
           <h1>Monitoring Dashboard</h1>
-          <div class="breadcrumb"><span class="current" id="breadcrumbCurrent">전체현황</span></div>
+          <div class="breadcrumb"><span class="current" id="breadcrumbCurrent">센서 연동</span></div>
         </div>
       </div>
 
       <div class="content-lower">
-      <section id="page-dashboard" class="page-view">
+      <section id="page-dashboard" class="page-view" hidden>
       <div class="grid-2">
         <div class="card">
           <div class="card-head">
@@ -300,7 +319,7 @@
       </div>
       </section>
 
-      <section id="page-sensor" class="page-view" hidden>
+      <section id="page-sensor" class="page-view">
 
       <div class="grid-2-equal">
         <div class="card">
@@ -351,6 +370,24 @@
             </div>
             <div class="chart-wrap" id="sensorClusterChart"></div>
           </div>
+        </div>
+      </div>
+
+      <div class="section-gap-sm"></div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>AI 분석</h2>
+          <span class="chip good" style="font-size:11px;" id="sensorAnalysisChip">분석 중</span>
+        </div>
+        <div class="stat2x2" style="margin:8px 22px 20px;">
+          <div class="cell"><div class="lbl">군집 평균 대비 차이</div><div class="val num" id="sensorAvgGap">-</div></div>
+          <div class="cell"><div class="lbl">연간 변화 추세</div><div class="val num" id="sensorTrend">-</div></div>
+          <div class="cell"><div class="lbl">예상 재도장 시점</div><div class="val num" id="sensorRepaintForecast">-</div></div>
+          <div class="cell"><div class="lbl">분석 표본</div><div class="val num" id="sensorSampleCount">-</div></div>
+        </div>
+        <div style="padding:10px 22px 20px; font-size:13px; line-height:1.7; color:var(--ink-secondary); white-space:pre-line;" id="sensorAiText">
+          분석 중입니다...
         </div>
       </div>
       </section>

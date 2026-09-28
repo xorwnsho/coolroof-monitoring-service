@@ -539,6 +539,51 @@
     setInterval(refresh, 60000);
   }
 
+  function initSensorAnalysis() {
+    const chipEl = document.getElementById("sensorAnalysisChip");
+    const avgGapEl = document.getElementById("sensorAvgGap");
+    const trendEl = document.getElementById("sensorTrend");
+    const repaintEl = document.getElementById("sensorRepaintForecast");
+    const sampleEl = document.getElementById("sensorSampleCount");
+    const aiTextEl = document.getElementById("sensorAiText");
+    if (!chipEl) return;
+
+    const STATUS_LABEL = { NORMAL: "정상", CAUTION: "주의", REPAINT_RECOMMENDED: "재도장 권장" };
+    const STATUS_CLASS = { NORMAL: "good", CAUTION: "warning", REPAINT_RECOMMENDED: "critical" };
+
+    async function refresh() {
+      try {
+        const res = await fetch(`${CLUSTER_API_BASE}/api/sensor/analysis`);
+        const data = await res.json();
+        if (!res.ok) {
+          chipEl.textContent = "데이터 부족";
+          chipEl.className = "chip";
+          avgGapEl.textContent = "-";
+          trendEl.textContent = "-";
+          repaintEl.textContent = "-";
+          sampleEl.textContent = "-";
+          aiTextEl.textContent = data.error || "아직 분석할 데이터가 충분하지 않습니다.";
+          return;
+        }
+        chipEl.textContent = STATUS_LABEL[data.status] || data.status;
+        chipEl.className = `chip ${STATUS_CLASS[data.status] || ""}`;
+        const sign = (v) => (v > 0 ? "+" : "");
+        avgGapEl.textContent = `${sign(data.avgGap)}${data.avgGap.toFixed(2)}°C`;
+        trendEl.textContent = data.trendSlopePerYear == null
+            ? "산출 불가"
+            : `${sign(data.trendSlopePerYear)}${data.trendSlopePerYear.toFixed(2)}°C/년`;
+        repaintEl.textContent = data.repaintForecast || "해당 없음";
+        sampleEl.textContent = `${data.sampleCount}건`;
+        aiTextEl.textContent = data.aiText || "AI 요약을 생성하지 못했습니다.";
+      } catch (err) {
+        aiTextEl.textContent = "서버에 연결하지 못했습니다.";
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 300000);
+  }
+
   function initPageNav() {
     const navButtons = document.querySelectorAll(".railbtn[data-page]");
     const pages = document.querySelectorAll(".page-view");
@@ -567,6 +612,7 @@
     initBuildingSearch();
     initSensorHistoryChart();
     initSensorClusterChart();
+    initSensorAnalysis();
   }
 
   document.addEventListener("DOMContentLoaded", init);

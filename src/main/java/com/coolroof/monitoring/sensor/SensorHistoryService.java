@@ -95,7 +95,7 @@ public class SensorHistoryService {
         return new ClusterComparisonResponse(labels, sensorValues, clusterAverageValues);
     }
 
-    private double referenceFactor() {
+    double referenceFactor() {
         BuildingThermalModel.StructureInfo structInfo = BuildingThermalModel.STRUCTURE_INFO
                 .getOrDefault(REFERENCE_STRUCTURE, BuildingThermalModel.UNSPECIFIED_STRUCTURE_INFO);
         BuildingThermalModel.UsageInfo usageInfo = BuildingThermalModel.USAGE_INFO.get(REFERENCE_USAGE);
@@ -190,7 +190,7 @@ public class SensorHistoryService {
     }
 
     /** 계절(일자)·시간대 기반 외기온도 추정 + 가정 건물 프로필 계수를 적용한 참고용 표면온도. */
-    private double referenceSurfaceTemp(LocalDateTime t, double referenceFactor) {
+    double referenceSurfaceTemp(LocalDateTime t, double referenceFactor) {
         int dayOfYear = t.getDayOfYear();
         double angle = 2 * Math.PI * (dayOfYear - 105) / 365.0;
         double seasonalBase = 14 + 16 * Math.sin(angle);

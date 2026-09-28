@@ -26,6 +26,7 @@ public class SensorIngestController {
 
     private final SensorIngestService sensorIngestService;
     private final SensorHistoryService sensorHistoryService;
+    private final SensorAnalysisService sensorAnalysisService;
 
     @Value("${sensor.device-key}")
     private String expectedDeviceKey;
@@ -65,9 +66,20 @@ public class SensorIngestController {
         return sensorHistoryService.getClusterComparison(window);
     }
 
+    @GetMapping("/api/sensor/analysis")
+    public SensorAnalysisResult analysis() {
+        return sensorAnalysisService.analyze();
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleBadRequest(IllegalArgumentException e) {
+        return Map.of("error", e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleNoData(IllegalStateException e) {
         return Map.of("error", e.getMessage());
     }
 }

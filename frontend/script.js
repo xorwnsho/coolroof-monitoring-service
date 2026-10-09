@@ -726,25 +726,56 @@
     setInterval(refresh, 300000);
   }
 
+  // 페이지 id <-> 실제 주소창 경로. 버튼 클릭마다 주소가 바뀌고, 그 경로로 직접
+  // 접속하거나 새로고침해도 같은 페이지가 뜨도록 쓴다 (vercel.json의 rewrite와 짝을 이룸).
+  const PAGE_PATH = {
+    "page-dashboard": "/",
+    "page-sensor": "/mybuilding",
+    "page-simulator": "/simulator",
+    "page-cluster": "/compare",
+  };
+
+  function pageIdFromPath(pathname) {
+    for (const pageId in PAGE_PATH) {
+      if (PAGE_PATH[pageId] === pathname) return pageId;
+    }
+    return "page-dashboard";
+  }
+
   function initPageNav() {
     const navButtons = document.querySelectorAll(".railbtn[data-page]");
     const pages = document.querySelectorAll(".page-view");
     const breadcrumbCurrent = document.getElementById("breadcrumbCurrent");
 
+    function activatePage(targetId, pushUrl) {
+      pages.forEach((page) => {
+        page.hidden = page.id !== targetId;
+      });
+      navButtons.forEach((b) => b.classList.toggle("active", b.getAttribute("data-page") === targetId));
+      if (breadcrumbCurrent && PAGE_BREADCRUMB_LABEL[targetId]) {
+        breadcrumbCurrent.textContent = PAGE_BREADCRUMB_LABEL[targetId];
+      }
+      if (targetId === "page-dashboard") renderEffectChart();
+      if (targetId === "page-cluster" && clusterRefresh) clusterRefresh();
+
+      const path = PAGE_PATH[targetId] || "/";
+      if (pushUrl && location.pathname !== path) {
+        history.pushState({ pageId: targetId }, "", path);
+      }
+    }
+
     navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const targetId = btn.getAttribute("data-page");
-        pages.forEach((page) => {
-          page.hidden = page.id !== targetId;
-        });
-        navButtons.forEach((b) => b.classList.toggle("active", b === btn));
-        if (breadcrumbCurrent && PAGE_BREADCRUMB_LABEL[targetId]) {
-          breadcrumbCurrent.textContent = PAGE_BREADCRUMB_LABEL[targetId];
-        }
-        if (targetId === "page-dashboard") renderEffectChart();
-        if (targetId === "page-cluster" && clusterRefresh) clusterRefresh();
+        activatePage(btn.getAttribute("data-page"), true);
       });
     });
+
+    window.addEventListener("popstate", () => {
+      activatePage(pageIdFromPath(location.pathname), false);
+    });
+
+    // 최초 진입 시 주소창 경로에 맞는 페이지로 시작 (직접 접속·새로고침 대응)
+    activatePage(pageIdFromPath(location.pathname), false);
   }
 
   function init() {

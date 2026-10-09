@@ -46,3 +46,6 @@ sketch_sep27a/
 ### MD ###
 SIMULATOR.MD
 FIXSI.MD
+### PDF ###
+*.pdf
+*.PDF
